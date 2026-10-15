@@ -1,0 +1,206 @@
+// GrowthMachine Studio Content Store & Sync Manager
+const CONTENT_STORAGE_KEY = 'gms_site_content_v1';
+
+// Default Fallback Data
+const DEFAULT_DATA = {
+  siteProfile: {
+    agencyName: "GrowthMachine Studio",
+    tagline: "High-Converting Websites & Growth Landing Pages",
+    subheadline: "We build ultra-fast, premium websites & lead-generation machines using modern frameworks, conversion copywriting, and clean handcrafted code. Ready in 24 to 72 hours.",
+    email: "studio.growthmachine@gmail.com",
+    phone: "+91 75575 75514",
+    whatsapp: "917557575514",
+    location: "5b/23, Vishnu Garden, West Delhi 110018",
+    adminPin: "1234"
+  },
+  stats: [
+    { value: "24-48h", label: "Superfast Turnaround" },
+    { value: "100%", label: "Ownership Belongs To You" },
+    { value: "SEO-Ready", label: "Built for Google Visibility" },
+    { value: "Full Guide", label: "Domain & Hosting Assistance" }
+  ],
+  services: [
+    {
+      id: "landing-pages",
+      icon: "⚡",
+      title: "High-Converting Landing Pages",
+      desc: "Engineered specifically for Meta & Google Ad campaigns. Snappy load speed, psychological copywriting, and instant WhatsApp click-to-chat triggers."
+    },
+    {
+      id: "business-sites",
+      icon: "🏛️",
+      title: "Professional Business Websites",
+      desc: "Multi-page corporate platforms for Advocates, Clinics, Real Estate, and Consultants. Modern typography and undeniable authority."
+    },
+    {
+      id: "ecommerce-catalog",
+      icon: "🛍️",
+      title: "D2C Stores & Product Catalogs",
+      desc: "Fast, elegant product showcases with direct WhatsApp purchase workflows. Eliminate heavy monthly store fees and complicated setups."
+    },
+    {
+      id: "rapid-delivery",
+      icon: "⚙️",
+      title: "Sprint Engineering & Rapid Delivery",
+      desc: "We utilize modern agile sprints to build production-grade, hand-crafted code in 24 to 72 hours instead of typical multi-week delays."
+    }
+  ],
+  pricingPlans: [
+    {
+      id: "starter",
+      name: "Starter Landing Page",
+      badge: "Quick Launch",
+      price: "₹2,999",
+      period: "one-time",
+      desc: "Ideal for local businesses, ad campaigns, and single-service lead funnels.",
+      features: [
+        "1 Fast-Loading Landing Page",
+        "WhatsApp & Direct Call Buttons",
+        "Mobile First Responsive Layout",
+        "Free SSL & Edge CDN Hosting Setup",
+        "Contact Inquiry Form",
+        "Delivered in 24 - 48 Hours"
+      ],
+      popular: false
+    },
+    {
+      id: "business",
+      name: "Complete Business Suite",
+      badge: "Best Seller",
+      price: "₹6,499",
+      period: "one-time",
+      desc: "Full multi-section website for law chambers, clinics, real estate, and agencies.",
+      features: [
+        "Up to 5 Tailored Sections / Pages",
+        "Custom Branding & Trust Elements",
+        "Google SEO Meta Tags & Schema",
+        "Interactive Admin Portal to edit info",
+        "Cloudflare Edge Ultra-Fast Speed",
+        "Portfolio & Reviews Showcase",
+        "Delivered in 48 - 72 Hours"
+      ],
+      popular: true
+    },
+    {
+      id: "ecommerce",
+      name: "Catalog / D2C Store",
+      badge: "High Conversion",
+      price: "₹11,999",
+      period: "one-time",
+      desc: "Tailored for beauty products, clothing, and retail catalog businesses.",
+      features: [
+        "Full Product Showcase & Categories",
+        "Direct WhatsApp 1-Click Order Flow",
+        "Zero Recurring Server / Shopify Fees",
+        "Image Optimization & Fast CDN",
+        "Meta / Google Pixel Event Ready",
+        "Priority Support & Revisions"
+      ],
+      popular: false
+    }
+  ],
+  portfolio: [
+    {
+      id: "kanooni-salah",
+      title: "Kanooni Salah — Advocate Asif Ali",
+      client: "High Court of Delhi Advocate",
+      category: "Legal & Professional Services",
+      url: "https://fact2eva.github.io/kanooni-salah/",
+      image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+      desc: "Commanding legal consultation website designed for client conversion, case filing inquiries, and quick WhatsApp case evaluation.",
+      tags: ["Legal", "Lead Gen", "GitHub Pages"]
+    },
+    {
+      id: "beauty-blushers",
+      title: "BeautyBlushers — Luxury Makeup & Hair Studio",
+      client: "Luxury Bridal Makeup Artist & Hair Stylist",
+      category: "Beauty, Bridal & Salon Services",
+      url: "https://beautyblushers.vercel.app/",
+      image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80",
+      desc: "High-glamour bridal makeover and hair artistry booking platform. Designed for high-ticket bridal inquiries, portfolio looks, and 1-click WhatsApp appointment consultations.",
+      tags: ["Bridal Makeup", "Hair Styling", "Vercel / Cloudflare", "Lead Gen"]
+    }
+  ],
+  faq: [
+    {
+      q: "Will my website show on Google?",
+      a: "Yes — every site is built SEO-ready with clean structure, speed optimisation and Google Search Console setup. Ranking for competitive terms takes ongoing SEO, which we also offer."
+    },
+    {
+      q: "Who owns the website, domain, and accounts?",
+      a: "You do. Domain, website files, app source code and store accounts belong to you once the project is paid for."
+    },
+    {
+      q: "What about domain and hosting? Do I have to pay you?",
+      a: "You buy your own domain and hosting directly under your own name so you maintain 100% control forever. Yes, we will help you buy, guide you through every step, and set up everything end-to-end for you."
+    },
+    {
+      q: "Can I see and approve the design before finalizing?",
+      a: "Design you approve: See your homepage or app screens first. Enjoy unlimited changes for a week at the design stage so you get exactly what you envision."
+    },
+    {
+      q: "Do you provide support after the website is launched?",
+      a: "We offer support for changes, updates and fixes after launch — just call or WhatsApp the team anytime."
+    },
+    {
+      q: "Can I edit my contact details, phone, and add new projects later?",
+      a: "Yes! We provide an integrated, lightweight Studio Admin Portal right in your browser where you can update phone numbers, WhatsApp, emails, pricing, and showcase new work with zero coding required."
+    }
+  ]
+};
+
+// Data Store Controller
+const DataStore = {
+  get: function() {
+    try {
+      const stored = localStorage.getItem(CONTENT_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const defaults = JSON.parse(JSON.stringify(DEFAULT_DATA));
+          return {
+            ...defaults,
+            ...parsed,
+            siteProfile: {
+              ...defaults.siteProfile,
+              ...(parsed.siteProfile || {})
+            }
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('LocalStorage read error:', e);
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  },
+
+  save: function(newData) {
+    try {
+      localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newData));
+      return true;
+    } catch (e) {
+      console.error('LocalStorage write error:', e);
+      return false;
+    }
+  },
+
+  reset: function() {
+    try {
+      localStorage.removeItem(CONTENT_STORAGE_KEY);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  exportJSON: function() {
+    const data = this.get();
+    const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", str);
+    downloadAnchor.setAttribute("download", "content.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+};
