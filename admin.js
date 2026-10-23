@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function initAuth() {
   const overlay = document.getElementById('auth-overlay');
   const mainContainer = document.getElementById('admin-main-container');
-  const lockBtn = document.getElementById('admin-lock-btn');
   const authForm = document.getElementById('auth-form');
   const pinInput = document.getElementById('admin-pin-input');
   const errMsg = document.getElementById('auth-err-msg');
@@ -20,14 +19,12 @@ function initAuth() {
   function unlockPanel() {
     if (overlay) overlay.style.display = 'none';
     if (mainContainer) mainContainer.style.display = 'block';
-    if (lockBtn) lockBtn.style.display = 'inline-flex';
     if (errMsg) errMsg.style.display = 'none';
   }
 
   function lockPanel() {
     if (overlay) overlay.style.display = 'flex';
     if (mainContainer) mainContainer.style.display = 'none';
-    if (lockBtn) lockBtn.style.display = 'none';
     if (errMsg) errMsg.style.display = 'none';
     if (pinInput) {
       pinInput.value = '';
@@ -35,16 +32,17 @@ function initAuth() {
     }
   }
 
-  // Always strictly locked on initial page load and every refresh
+  // Always strictly locked on initial load
   lockPanel();
 
-  // Instant 1-click lock button in header
-  if (lockBtn) {
-    lockBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      lockPanel();
-    });
-  }
+  // Auto-lock whenever navigating away or leaving the page
+  window.addEventListener('beforeunload', lockPanel);
+  window.addEventListener('pagehide', lockPanel);
+
+  // Auto-lock when navigating back via browser history (BFCache restore)
+  window.addEventListener('pageshow', (e) => {
+    lockPanel();
+  });
 
   if (authForm) {
     authForm.addEventListener('submit', (e) => {
