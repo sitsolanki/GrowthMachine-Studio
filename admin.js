@@ -60,7 +60,7 @@ function initAuth() {
       // Only one active password - no universal or backdoor password
       const activePin = (currentData.siteProfile && currentData.siteProfile.adminPin)
         ? String(currentData.siteProfile.adminPin).trim()
-        : '8512851240';
+        : '19882020';
       const enteredPin = pinInput ? pinInput.value.trim() : '';
 
       if (enteredPin === activePin) {
@@ -88,7 +88,7 @@ function populateProfileForm() {
   document.getElementById('prof-tagline').value = prof.tagline || '';
   document.getElementById('prof-subheadline').value = prof.subheadline || '';
   document.getElementById('prof-location').value = prof.location || '';
-  document.getElementById('prof-pin').value = prof.adminPin || '8512851240';
+  document.getElementById('prof-pin').value = prof.adminPin || '19882020';
 
   const form = document.getElementById('profile-form');
   form.addEventListener('submit', (e) => {
