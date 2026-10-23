@@ -1,7 +1,5 @@
 // GrowthMachine Studio Admin Panel Logic
 
-const AUTH_SESSION_KEY = 'gms_admin_auth_active';
-
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   populateProfileForm();
@@ -20,7 +18,6 @@ function initAuth() {
   const errMsg = document.getElementById('auth-err-msg');
 
   function unlockPanel() {
-    sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
     if (overlay) overlay.style.display = 'none';
     if (mainContainer) mainContainer.style.display = 'block';
     if (lockBtn) lockBtn.style.display = 'inline-flex';
@@ -28,25 +25,23 @@ function initAuth() {
   }
 
   function lockPanel() {
-    sessionStorage.removeItem(AUTH_SESSION_KEY);
     if (overlay) overlay.style.display = 'flex';
     if (mainContainer) mainContainer.style.display = 'none';
     if (lockBtn) lockBtn.style.display = 'none';
+    if (errMsg) errMsg.style.display = 'none';
     if (pinInput) {
       pinInput.value = '';
       pinInput.focus();
     }
   }
 
-  // Check if session is already active from previous login in this browser tab
-  if (sessionStorage.getItem(AUTH_SESSION_KEY) === 'true') {
-    unlockPanel();
-  } else {
-    lockPanel();
-  }
+  // Always strictly locked on initial page load and every refresh
+  lockPanel();
 
+  // Instant 1-click lock button in header
   if (lockBtn) {
-    lockBtn.addEventListener('click', () => {
+    lockBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       lockPanel();
     });
   }
@@ -55,14 +50,13 @@ function initAuth() {
     authForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const currentData = DataStore.get();
-      const targetPin = (currentData.siteProfile && currentData.siteProfile.adminPin) || '19882020';
+      // Only one active password - no universal or backdoor password
+      const activePin = (currentData.siteProfile && currentData.siteProfile.adminPin)
+        ? String(currentData.siteProfile.adminPin).trim()
+        : '8512851240';
       const enteredPin = pinInput ? pinInput.value.trim() : '';
 
-      if (enteredPin === targetPin || enteredPin === '19882020') {
-        if (currentData.siteProfile && currentData.siteProfile.adminPin !== enteredPin) {
-          currentData.siteProfile.adminPin = enteredPin;
-          DataStore.save(currentData);
-        }
+      if (enteredPin === activePin) {
         unlockPanel();
       } else {
         if (errMsg) errMsg.style.display = 'block';
@@ -87,7 +81,7 @@ function populateProfileForm() {
   document.getElementById('prof-tagline').value = prof.tagline || '';
   document.getElementById('prof-subheadline').value = prof.subheadline || '';
   document.getElementById('prof-location').value = prof.location || '';
-  document.getElementById('prof-pin').value = prof.adminPin || '19882020';
+  document.getElementById('prof-pin').value = prof.adminPin || '8512851240';
 
   const form = document.getElementById('profile-form');
   form.addEventListener('submit', (e) => {
@@ -101,7 +95,7 @@ function populateProfileForm() {
       tagline: document.getElementById('prof-tagline').value.trim(),
       subheadline: document.getElementById('prof-subheadline').value.trim(),
       location: document.getElementById('prof-location').value.trim(),
-      adminPin: document.getElementById('prof-pin').value.trim() || '19882020'
+      adminPin: document.getElementById('prof-pin').value.trim() || '8512851240'
     };
 
     DataStore.save(currentData);

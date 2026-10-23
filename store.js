@@ -11,7 +11,7 @@ const DEFAULT_DATA = {
     phone: "+91 75575 75514",
     whatsapp: "917557575514",
     location: "5b/23, Vishnu Garden, West Delhi 110018",
-    adminPin: "19882020"
+    adminPin: "8512851240"
   },
   stats: [
     { value: "24-48h", label: "Superfast Turnaround" },
@@ -158,9 +158,9 @@ const DataStore = {
         const parsed = JSON.parse(stored);
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           const defaults = JSON.parse(JSON.stringify(DEFAULT_DATA));
-          // Auto-migrate legacy default PIN to user's configured PIN
-          if (parsed.siteProfile && parsed.siteProfile.adminPin === '1234') {
-            parsed.siteProfile.adminPin = '19882020';
+          // Auto-migrate legacy default PINs to current PIN
+          if (parsed.siteProfile && (parsed.siteProfile.adminPin === '1234' || parsed.siteProfile.adminPin === '19882020')) {
+            parsed.siteProfile.adminPin = '8512851240';
           }
           return {
             ...defaults,
