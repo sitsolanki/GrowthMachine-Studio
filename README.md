@@ -54,11 +54,11 @@ Make sure the deployment includes every project file, especially the root-level 
 
 ## 🔒 Accessing Your Admin Portal
 - Open `admin.html` (e.g. `https://yourdomain.com/admin.html` or locally).
-- Enter the default PIN: `1234`
+- Enter the default PIN: `19882020`
 - You can change:
   - Business Email
   - WhatsApp Number & Phone Call number
   - Tagline & Descriptions
-  - Add new Client Projects with live links
+  - Add new Client Projects with live links, custom/expanded categories, and direct image upload or image URL
   - Update Package Prices
   - Change your Admin PIN

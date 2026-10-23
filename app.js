@@ -80,7 +80,7 @@ function renderPageContent() {
     portfolioContainer.innerHTML = data.portfolio.map(item => `
       <div class="portfolio-card">
         <div class="portfolio-preview">
-          <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}" loading="lazy">
+          <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'800\\' height=\\'500\\' viewBox=\\'0 0 800 500\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23181b24\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23ffaa00\\' font-family=\\'sans-serif\\' font-size=\\'22\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>${escapeHTML(item.title)}</text></svg>';">
           <div class="portfolio-badge">${escapeHTML(item.category || 'Live Project')}</div>
         </div>
         <div class="portfolio-body">

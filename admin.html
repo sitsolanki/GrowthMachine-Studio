@@ -205,6 +205,40 @@
       border: 1px solid rgba(16, 185, 129, 0.4);
       color: #34d399;
     }
+    .img-upload-zone {
+      border: 2px dashed rgba(255, 170, 0, 0.4);
+      border-radius: var(--radius-sm);
+      padding: 26px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      background: rgba(255, 170, 0, 0.03);
+    }
+    .img-upload-zone:hover, .img-upload-zone.dragover {
+      border-color: var(--accent-orange);
+      background: rgba(255, 106, 19, 0.09);
+      transform: scale(1.008);
+    }
+    .img-tab-btn {
+      padding: 7px 15px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      border: 1px solid var(--border-strong);
+      background: rgba(255, 255, 255, 0.04);
+      color: #fff;
+    }
+    .img-tab-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .img-tab-btn.active {
+      background: var(--accent-gradient);
+      color: #000;
+      font-weight: 700;
+      border-color: transparent;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
   </style>
 </head>
 <body>
@@ -334,20 +368,75 @@
             <div class="form-group">
               <label for="proj-category">Category</label>
               <select id="proj-category">
-                <option value="Professional Services">Professional Services / Clinics</option>
-                <option value="Legal & Law">Legal & Advocate</option>
-                <option value="E-Commerce / D2C">E-Commerce / D2C Catalog</option>
-                <option value="High-Converting Landing Page">High-Converting Landing Page</option>
-                <option value="Corporate Website">Corporate Website</option>
+                <option value="High-Converting Landing Page">⚡ High-Converting Landing Page</option>
+                <option value="Lead Generation Funnel">🎯 Lead Generation Funnel</option>
+                <option value="Legal & Law Chambers">⚖️ Legal & Law Chambers (Advocates)</option>
+                <option value="Healthcare, Doctors & Clinics">🏥 Healthcare, Doctors & Dental Clinics</option>
+                <option value="Beauty, Bridal & Luxury Salon">💄 Beauty, Bridal Makeup & Luxury Salon</option>
+                <option value="E-Commerce & D2C Stores">🛍️ E-Commerce & D2C Product Stores</option>
+                <option value="Real Estate & Builders">🏢 Real Estate, Builders & Architecture</option>
+                <option value="Education, Coaching & EdTech">🎓 Education, Coaching & Academy</option>
+                <option value="Fitness, Gym & Wellness">💪 Fitness, Gym & Wellness Studio</option>
+                <option value="Restaurants, Cafes & Cloud Kitchens">🍽️ Restaurants, Cafes & Food Brands</option>
+                <option value="Chartered Accountant & Finance">📊 CA, Tax Advisory & Financial Services</option>
+                <option value="Corporate & B2B Enterprise">🏛️ Corporate & B2B Company Website</option>
+                <option value="Tech, SaaS & Mobile App">💻 Tech, SaaS & App Showcase</option>
+                <option value="Logistics & Packers-Movers">🚚 Logistics, Transport & Packers-Movers</option>
+                <option value="Interior Design & Home Decor">🎨 Interior Design & Home Decor</option>
+                <option value="Event & Wedding Photography">📸 Event Management & Photography</option>
+                <option value="Travel, Tours & Hotel Booking">✈️ Travel, Tourism & Hospitality</option>
+                <option value="Automobile & Car Detailing">🚗 Automobile, Car Detailing & Dealership</option>
+                <option value="Personal Branding & Portfolio">🌟 Personal Branding & Portfolio</option>
+                <option value="Professional Services">💼 Professional Services / Consulting</option>
+                <option value="__custom__">✏️ + Custom Category (Type your own)...</option>
               </select>
+              <input type="text" id="proj-category-custom" placeholder="Type your custom category name..." style="display: none; margin-top: 8px;">
             </div>
             <div class="form-group">
               <label for="proj-url">Live URL</label>
               <input type="text" id="proj-url" placeholder="https://yourclient.pages.dev or github.io" required>
             </div>
             <div class="form-group full">
-              <label for="proj-image">Preview Image / Screenshot URL</label>
-              <input type="text" id="proj-image" placeholder="https://images.unsplash.com/... or /images/shot.jpg" required>
+              <label>Preview Image / Screenshot</label>
+              <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 18px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                  <button type="button" id="img-tab-upload" class="img-tab-btn active">
+                    📁 Upload Image File
+                  </button>
+                  <button type="button" id="img-tab-url" class="img-tab-btn">
+                    🔗 Paste Image URL
+                  </button>
+                </div>
+
+                <!-- Mode 1: File Upload & Drag & Drop -->
+                <div id="img-panel-upload">
+                  <div id="img-dropzone" class="img-upload-zone">
+                    <input type="file" id="proj-image-file" accept="image/*" style="display: none;">
+                    <div style="font-size: 36px; margin-bottom: 8px;">🖼️</div>
+                    <div style="font-weight: 700; color: #fff; font-size: 15px; margin-bottom: 4px;">Click to Browse or Drag &amp; Drop Image Here</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Accepts any image format (JPG, PNG, WebP, GIF, SVG, screenshots from mobile or PC)</div>
+                  </div>
+                </div>
+
+                <!-- Mode 2: Paste Image URL -->
+                <div id="img-panel-url" style="display: none;">
+                  <input type="text" id="proj-image-url-input" placeholder="Paste any image URL (e.g. https://... or /images/shot.jpg)">
+                  <small style="color: var(--text-dim); font-size: 12px; margin-top: 6px; display: block;">Any web image link, CDN link, or direct image URL is accepted.</small>
+                </div>
+
+                <!-- Hidden Input holding final image value -->
+                <input type="hidden" id="proj-image" required>
+
+                <!-- Live Preview Card -->
+                <div id="img-preview-card" style="display: none; margin-top: 14px; padding: 12px 16px; background: var(--bg-card); border-radius: var(--radius-sm); border: 1px solid var(--border); align-items: center; gap: 16px; flex-wrap: wrap;">
+                  <img id="img-preview-thumb" src="" alt="Screenshot Preview" style="width: 140px; height: 90px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); background: #000;">
+                  <div style="flex: 1; min-width: 180px;">
+                    <div id="img-preview-name" style="font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px;">Image Ready</div>
+                    <div id="img-preview-meta" style="font-size: 12px; color: #34d399; margin-bottom: 8px;">✓ Ready to Publish</div>
+                    <button type="button" id="img-remove-btn" class="btn-danger">Remove / Change Image</button>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="form-group full">
               <label for="proj-desc">Short Description (What problem it solved)</label>
