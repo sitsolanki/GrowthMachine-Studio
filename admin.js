@@ -12,32 +12,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Authentication Handling
 function initAuth() {
-  // Always default lock on load so unauthorized visitors cannot see contents
   const overlay = document.getElementById('auth-overlay');
-  if (overlay) overlay.style.display = 'flex';
-
+  const mainContainer = document.getElementById('admin-main-container');
+  const lockBtn = document.getElementById('admin-lock-btn');
   const authForm = document.getElementById('auth-form');
   const pinInput = document.getElementById('admin-pin-input');
   const errMsg = document.getElementById('auth-err-msg');
+
+  function unlockPanel() {
+    sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
+    if (overlay) overlay.style.display = 'none';
+    if (mainContainer) mainContainer.style.display = 'block';
+    if (lockBtn) lockBtn.style.display = 'inline-flex';
+    if (errMsg) errMsg.style.display = 'none';
+  }
+
+  function lockPanel() {
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    if (overlay) overlay.style.display = 'flex';
+    if (mainContainer) mainContainer.style.display = 'none';
+    if (lockBtn) lockBtn.style.display = 'none';
+    if (pinInput) {
+      pinInput.value = '';
+      pinInput.focus();
+    }
+  }
+
+  // Check if session is already active from previous login in this browser tab
+  if (sessionStorage.getItem(AUTH_SESSION_KEY) === 'true') {
+    unlockPanel();
+  } else {
+    lockPanel();
+  }
+
+  if (lockBtn) {
+    lockBtn.addEventListener('click', () => {
+      lockPanel();
+    });
+  }
 
   if (authForm) {
     authForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const currentData = DataStore.get();
       const targetPin = (currentData.siteProfile && currentData.siteProfile.adminPin) || '19882020';
-      const enteredPin = pinInput.value.trim();
+      const enteredPin = pinInput ? pinInput.value.trim() : '';
 
       if (enteredPin === targetPin || enteredPin === '19882020') {
         if (currentData.siteProfile && currentData.siteProfile.adminPin !== enteredPin) {
           currentData.siteProfile.adminPin = enteredPin;
           DataStore.save(currentData);
         }
-        if (overlay) overlay.style.display = 'none';
-        if (errMsg) errMsg.style.display = 'none';
+        unlockPanel();
       } else {
         if (errMsg) errMsg.style.display = 'block';
-        pinInput.value = '';
-        pinInput.focus();
+        if (pinInput) {
+          pinInput.value = '';
+          pinInput.focus();
+        }
       }
     });
   }

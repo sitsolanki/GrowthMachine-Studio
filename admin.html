@@ -271,6 +271,9 @@
       </a>
 
       <div class="nav-actions">
+        <button type="button" id="admin-lock-btn" class="btn btn-outline btn-sm" style="display: none; border-color: rgba(255, 106, 19, 0.4); color: #ffaa00;">
+          <span>🔒 Lock Admin</span>
+        </button>
         <a href="index.html" class="btn btn-outline btn-sm">
           <span>← Back to Live Site</span>
         </a>
@@ -278,7 +281,7 @@
     </div>
   </header>
 
-  <div class="admin-container">
+  <div id="admin-main-container" class="admin-container" style="display: none;">
     <!-- Feedback Toast -->
     <div id="status-toast" class="alert-banner alert-success">
       ✓ Settings updated successfully and synced with your website!
