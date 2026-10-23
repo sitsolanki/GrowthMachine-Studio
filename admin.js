@@ -7,13 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
   populatePricingForm();
   bindEvents();
 
-  // Fetch latest server-side data & password from Cloudflare Worker KV
+  // Silently sync latest server-side data & password from Cloudflare Worker KV / Server
   if (typeof DataStore !== 'undefined' && DataStore.fetchFromServer) {
     DataStore.fetchFromServer(() => {
       populateProfileForm();
       populatePortfolioList();
       populatePricingForm();
-      updateCloudflareBadge();
     });
   }
 });
@@ -95,6 +94,12 @@ function populateProfileForm() {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const currentData = DataStore.get();
+    const newPin = document.getElementById('prof-pin').value.trim();
+    if (!newPin) {
+      alert('Admin Security PIN cannot be empty.');
+      return;
+    }
+
     currentData.siteProfile = {
       agencyName: document.getElementById('prof-agency-name').value.trim(),
       email: document.getElementById('prof-email').value.trim(),
@@ -103,15 +108,11 @@ function populateProfileForm() {
       tagline: document.getElementById('prof-tagline').value.trim(),
       subheadline: document.getElementById('prof-subheadline').value.trim(),
       location: document.getElementById('prof-location').value.trim(),
-      adminPin: document.getElementById('prof-pin').value.trim() || '8512851240'
+      adminPin: newPin
     };
 
     DataStore.save(currentData);
-    if (DataStore.getWorkerUrl()) {
-      showToast('Business details & password updated and synced to Cloudflare KV universally!');
-    } else {
-      showToast('Business details updated locally! (Connect Cloudflare Worker below to sync across all devices)');
-    }
+    showToast('Business Profile & Admin Password updated successfully!');
   });
 }
 
@@ -401,79 +402,6 @@ function bindEvents() {
       showToast('New project published to live showcase!');
     });
   }
-
-  // Cloudflare Worker & KV Sync Controls
-  const cfInput = document.getElementById('cf-worker-url');
-  const cfForm = document.getElementById('cf-worker-form');
-  const cfSyncBtn = document.getElementById('cf-sync-now-btn');
-
-  if (cfInput) {
-    cfInput.value = DataStore.getWorkerUrl();
-    updateCloudflareBadge();
-  }
-
-  if (cfForm) {
-    cfForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const newUrl = cfInput.value.trim();
-      DataStore.setWorkerUrl(newUrl);
-      updateCloudflareBadge('Testing...');
-      
-      if (!newUrl) {
-        updateCloudflareBadge();
-        showToast('Worker URL removed. Using local browser storage.');
-        return;
-      }
-
-      const syncResult = await DataStore.syncToCloudflareKV(DataStore.get());
-      if (syncResult.success) {
-        updateCloudflareBadge('connected');
-        showToast('✓ Connected to Cloudflare Worker & KV! All devices will now sync universally.');
-      } else {
-        updateCloudflareBadge('error');
-        showToast('Could not reach Cloudflare Worker. Please verify the URL and CORS headers.');
-      }
-    });
-  }
-
-  if (cfSyncBtn) {
-    cfSyncBtn.addEventListener('click', async () => {
-      const currentUrl = DataStore.getWorkerUrl();
-      if (!currentUrl) {
-        alert('Please enter and save your Cloudflare Worker URL first.');
-        if (cfInput) cfInput.focus();
-        return;
-      }
-      showToast('Syncing data to Cloudflare KV Edge...');
-      const res = await DataStore.syncToCloudflareKV(DataStore.get());
-      if (res.success) {
-        updateCloudflareBadge('connected');
-        showToast('✓ Successfully synced all data & password to Cloudflare KV Edge!');
-      } else {
-        updateCloudflareBadge('error');
-        alert('Sync failed: ' + (res.reason || 'Check Worker status and URL'));
-      }
-    });
-  }
-
-  // Export JSON
-  const exportBtn = document.getElementById('export-json-btn');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', () => {
-      DataStore.exportJSON();
-    });
-  }
-
-  // Reset to Defaults
-  const resetBtn = document.getElementById('reset-defaults-btn');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to reset all data back to factory defaults? Any custom projects will be reset.')) {
-        DataStore.reset();
-        window.location.reload();
-      }
-    });
-  }
 }
 
 // Pricing Form Manager
@@ -523,37 +451,6 @@ function showToast(msg) {
     setTimeout(() => {
       toast.style.display = 'none';
     }, 4000);
-  }
-}
-
-function updateCloudflareBadge(overrideStatus) {
-  const badge = document.getElementById('cf-sync-badge');
-  if (!badge) return;
-
-  const url = DataStore.getWorkerUrl();
-  if (overrideStatus === 'Testing...') {
-    badge.textContent = 'Testing Cloudflare Connection...';
-    badge.style.color = '#ffaa00';
-    badge.style.borderColor = 'rgba(255, 170, 0, 0.4)';
-    badge.style.background = 'rgba(255, 170, 0, 0.15)';
-    return;
-  }
-
-  if (overrideStatus === 'connected' || (url && !overrideStatus)) {
-    badge.textContent = '🟢 Connected to Cloudflare KV Edge';
-    badge.style.color = '#34d399';
-    badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-    badge.style.background = 'rgba(16, 185, 129, 0.15)';
-  } else if (overrideStatus === 'error') {
-    badge.textContent = '🔴 Connection Error';
-    badge.style.color = '#ff6b6b';
-    badge.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-    badge.style.background = 'rgba(239, 68, 68, 0.15)';
-  } else {
-    badge.textContent = '⚪ Local Storage (Add Worker URL to Sync)';
-    badge.style.color = 'var(--text-dim)';
-    badge.style.borderColor = 'var(--border)';
-    badge.style.background = 'rgba(255, 255, 255, 0.04)';
   }
 }
 

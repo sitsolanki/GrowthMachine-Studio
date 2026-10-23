@@ -484,46 +484,6 @@
         </div>
       </form>
     </div>
-
-    <!-- Section 4: Universal Cloudflare Worker & KV Cloud Sync -->
-    <div class="admin-card">
-      <div class="admin-card-header">
-        <h2><span>⚡</span> Cloudflare Worker &amp; KV Universal Sync</h2>
-        <span id="cf-sync-badge" class="badge" style="background: rgba(255, 170, 0, 0.15); border-color: rgba(255, 170, 0, 0.4); color: #ffaa00;">
-          Checking Cloudflare KV...
-        </span>
-      </div>
-      <p style="margin-bottom: 20px; font-size: 14px;">
-        Connect your Cloudflare Worker with KV storage so every change (including your Admin Password, phone numbers, and portfolio items) syncs <strong>universally in real-time across all mobile phones, PCs, and devices</strong>.
-      </p>
-
-      <form id="cf-worker-form" style="margin-bottom: 24px;">
-        <div class="form-group full">
-          <label for="cf-worker-url">Cloudflare Worker API Endpoint</label>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="text" id="cf-worker-url" placeholder="https://growthmachine-api.<your-subdomain>.workers.dev" style="flex: 1; min-width: 260px;">
-            <button type="submit" class="btn btn-primary btn-sm">
-              <span>🔗 Save &amp; Test Connection</span>
-            </button>
-            <button type="button" id="cf-sync-now-btn" class="btn btn-outline btn-sm">
-              <span>🔄 Sync to KV Now</span>
-            </button>
-          </div>
-          <small style="color: var(--text-dim); font-size: 12px; margin-top: 6px; display: block;">
-            The code and configuration for your Worker with KV storage is ready in your project's <code>cloudflare-worker/</code> folder.
-          </small>
-        </div>
-      </form>
-
-      <div class="admin-actions" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 20px;">
-        <button id="export-json-btn" class="btn btn-outline btn-sm">
-          <span>📥 Download Updated content.json</span>
-        </button>
-        <button id="reset-defaults-btn" class="btn btn-danger btn-sm">
-          <span>⚠️ Reset to Factory Defaults</span>
-        </button>
-      </div>
-    </div>
   </div>
 
   <script src="store.js"></script>
