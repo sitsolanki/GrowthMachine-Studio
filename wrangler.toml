@@ -1,0 +1,14 @@
+name = "growthmachine-studio"
+main = "src/worker.js"
+compatibility_date = "2024-10-15"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "growthmachine-db"
+database_id = "492e7106-ff4b-452c-a9e7-06153d181cd9"
+
+[assets]
+directory = "."
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = true

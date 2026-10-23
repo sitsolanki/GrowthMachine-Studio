@@ -6,8 +6,7 @@
     "email": "studio.growthmachine@gmail.com",
     "phone": "+91 75575 75514",
     "whatsapp": "917557575514",
-    "location": "5b/23, Vishnu Garden, West Delhi 110018",
-    "adminPin": "19882020"
+    "location": "5b/23, Vishnu Garden, West Delhi 110018"
   },
   "stats": [
     { "value": "24-48h", "label": "Superfast Turnaround" },
@@ -18,25 +17,25 @@
   "services": [
     {
       "id": "landing-pages",
-      "icon": "⚡",
+      "icon": "?",
       "title": "High-Converting Landing Pages",
       "desc": "Engineered specifically for Meta & Google Ad campaigns. Snappy load speed, psychological copywriting, and instant WhatsApp click-to-chat triggers."
     },
     {
       "id": "business-sites",
-      "icon": "🏛️",
+      "icon": "???",
       "title": "Professional Business Websites",
       "desc": "Multi-page corporate platforms for Advocates, Clinics, Real Estate, and Consultants. Modern typography and undeniable authority."
     },
     {
       "id": "ecommerce-catalog",
-      "icon": "🛍️",
+      "icon": "???",
       "title": "D2C Stores & Product Catalogs",
       "desc": "Fast, elegant product showcases with direct WhatsApp purchase workflows. Eliminate heavy monthly store fees and complicated setups."
     },
     {
       "id": "rapid-delivery",
-      "icon": "⚙️",
+      "icon": "??",
       "title": "Sprint Engineering & Rapid Delivery",
       "desc": "We utilize modern agile sprints to build production-grade, hand-crafted code in 24 to 72 hours instead of typical multi-week delays."
     }
@@ -46,7 +45,7 @@
       "id": "starter",
       "name": "Starter Landing Page",
       "badge": "Quick Launch",
-      "price": "₹2,999",
+      "price": "?2,999",
       "period": "one-time",
       "desc": "Ideal for local businesses, ad campaigns, and single-service lead funnels.",
       "features": [
@@ -63,7 +62,7 @@
       "id": "business",
       "name": "Complete Business Suite",
       "badge": "Best Seller",
-      "price": "₹6,499",
+      "price": "?6,499",
       "period": "one-time",
       "desc": "Full multi-section website for law chambers, clinics, real estate, and agencies.",
       "features": [
@@ -81,7 +80,7 @@
       "id": "ecommerce",
       "name": "Catalog / D2C Store",
       "badge": "High Conversion",
-      "price": "₹11,999",
+      "price": "?11,999",
       "period": "one-time",
       "desc": "Tailored for beauty products, clothing, and retail catalog businesses.",
       "features": [
@@ -98,7 +97,7 @@
   "portfolio": [
     {
       "id": "kanooni-salah",
-      "title": "Kanooni Salah — Advocate Asif Ali",
+      "title": "Kanooni Salah � Advocate Asif Ali",
       "client": "High Court of Delhi Advocate",
       "category": "Legal & Professional Services",
       "url": "https://fact2eva.github.io/kanooni-salah/",
@@ -108,7 +107,7 @@
     },
     {
       "id": "beauty-blushers",
-      "title": "BeautyBlushers — Luxury Makeup & Hair Studio",
+      "title": "BeautyBlushers � Luxury Makeup & Hair Studio",
       "client": "Luxury Bridal Makeup Artist & Hair Stylist",
       "category": "Beauty, Bridal & Salon Services",
       "url": "https://beautyblushers.vercel.app/",
@@ -120,7 +119,7 @@
   "faq": [
     {
       "q": "Will my website show on Google?",
-      "a": "Yes — every site is built SEO-ready with clean structure, speed optimisation and Google Search Console setup. Ranking for competitive terms takes ongoing SEO, which we also offer."
+      "a": "Yes � every site is built SEO-ready with clean structure, speed optimisation and Google Search Console setup. Ranking for competitive terms takes ongoing SEO, which we also offer."
     },
     {
       "q": "Who owns the website, domain, and accounts?",
@@ -136,7 +135,7 @@
     },
     {
       "q": "Do you provide support after the website is launched?",
-      "a": "We offer support for changes, updates and fixes after launch — just call or WhatsApp the team anytime."
+      "a": "We offer support for changes, updates and fixes after launch � just call or WhatsApp the team anytime."
     },
     {
       "q": "Can I edit my contact details, phone, and add new projects later?",

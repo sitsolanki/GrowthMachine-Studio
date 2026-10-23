@@ -1,0 +1,7 @@
+.wrangler/
+.dev.vars*
+.env*
+node_modules/
+
+gbp/.tokens.json
+gbp/.env

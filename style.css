@@ -383,6 +383,66 @@ p {
   color: var(--text-muted);
 }
 
+.resource-article {
+  max-width: 860px;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.resource-article nav {
+  margin-bottom: 28px;
+  font-size: 14px;
+}
+
+.resource-article h1,
+.resource-article h2,
+.resource-article h3 {
+  color: #fff;
+  line-height: 1.25;
+}
+
+.resource-article h1 {
+  margin-bottom: 20px;
+  font-size: clamp(2.1rem, 5vw, 3.4rem);
+}
+
+.resource-article h2 {
+  margin: 48px 0 14px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.resource-article h3 {
+  margin: 28px 0 10px;
+  font-size: 1.2rem;
+}
+
+.resource-article p,
+.resource-article ul {
+  margin: 0 0 18px;
+}
+
+.resource-article ul {
+  padding-left: 24px;
+}
+
+.resource-article li {
+  margin-bottom: 8px;
+}
+
+.resource-article a:not(.btn) {
+  color: #ffb547;
+}
+
+.resource-article .comparison-card {
+  margin: 26px 0;
+}
+
+.resource-article .comparison-table th,
+.resource-article .comparison-table td {
+  padding: 16px;
+}
+
 /* Work / Portfolio Section */
 .portfolio-grid {
   display: grid;

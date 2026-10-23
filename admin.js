@@ -1,72 +1,117 @@
 // GrowthMachine Studio Admin Panel Logic
+// Universal synchronization powered by Cloudflare Workers & D1 SQL Database
+
+const API_BASE = '';
+let adminToken = null; // Stored in memory only during active session
+let currentListings = [];
+
+async function apiRequest(path, opts = {}) {
+  const headers = new Headers(opts.headers || {});
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (adminToken) {
+    headers.set('Authorization', `Bearer ${adminToken}`);
+  }
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...opts,
+    headers,
+  });
+  if (res.status === 401) {
+    adminToken = null;
+    lockAdmin();
+    throw new Error('Session locked or invalid PIN. Please unlock again.');
+  }
+  return res;
+}
+
+async function apiJson(path, opts = {}) {
+  const res = await apiRequest(path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+function lockAdmin() {
+  const overlay = document.getElementById('auth-overlay');
+  const mainContainer = document.getElementById('admin-main-container');
+  const pinInput = document.getElementById('admin-pin-input');
+  const errMsg = document.getElementById('auth-err-msg');
+
+  if (overlay) overlay.style.display = 'flex';
+  if (mainContainer) mainContainer.style.display = 'none';
+  if (errMsg) errMsg.style.display = 'none';
+  if (pinInput) {
+    pinInput.value = '';
+    pinInput.focus();
+  }
+  adminToken = null;
+}
+
+function unlockAdmin() {
+  const overlay = document.getElementById('auth-overlay');
+  const mainContainer = document.getElementById('admin-main-container');
+  const errMsg = document.getElementById('auth-err-msg');
+
+  if (overlay) overlay.style.display = 'none';
+  if (mainContainer) mainContainer.style.display = 'block';
+  if (errMsg) errMsg.style.display = 'none';
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   initAuth();
-  populateProfileForm();
-  populatePortfolioList();
-  populatePricingForm();
   bindEvents();
+  lockAdmin(); // Always strictly locked on initial page load / refresh
+});
 
-  // Silently sync latest server-side data & password from Cloudflare Worker KV / Server
-  if (typeof DataStore !== 'undefined' && DataStore.fetchFromServer) {
-    DataStore.fetchFromServer(() => {
-      populateProfileForm();
-      populatePortfolioList();
-      populatePricingForm();
-    });
+// Auto-lock when navigating away, switching tabs, or restoring from BFCache
+window.addEventListener('beforeunload', lockAdmin);
+window.addEventListener('pagehide', lockAdmin);
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted || !adminToken) {
+    lockAdmin();
   }
 });
 
-// Authentication Handling
+// Authentication Handling — Verified against Cloudflare D1 Server Database
 function initAuth() {
-  const overlay = document.getElementById('auth-overlay');
-  const mainContainer = document.getElementById('admin-main-container');
   const authForm = document.getElementById('auth-form');
   const pinInput = document.getElementById('admin-pin-input');
   const errMsg = document.getElementById('auth-err-msg');
 
-  function unlockPanel() {
-    if (overlay) overlay.style.display = 'none';
-    if (mainContainer) mainContainer.style.display = 'block';
-    if (errMsg) errMsg.style.display = 'none';
-  }
-
-  function lockPanel() {
-    if (overlay) overlay.style.display = 'flex';
-    if (mainContainer) mainContainer.style.display = 'none';
-    if (errMsg) errMsg.style.display = 'none';
-    if (pinInput) {
-      pinInput.value = '';
-      pinInput.focus();
-    }
-  }
-
-  // Always strictly locked on initial load
-  lockPanel();
-
-  // Auto-lock whenever navigating away or leaving the page
-  window.addEventListener('beforeunload', lockPanel);
-  window.addEventListener('pagehide', lockPanel);
-
-  // Auto-lock when navigating back via browser history (BFCache restore)
-  window.addEventListener('pageshow', (e) => {
-    lockPanel();
-  });
-
   if (authForm) {
-    authForm.addEventListener('submit', (e) => {
+    authForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const currentData = DataStore.get();
-      // Only one active password - no universal or backdoor password
-      const activePin = (currentData.siteProfile && currentData.siteProfile.adminPin)
-        ? String(currentData.siteProfile.adminPin).trim()
-        : '19882020';
       const enteredPin = pinInput ? pinInput.value.trim() : '';
+      if (!enteredPin) return;
 
-      if (enteredPin === activePin) {
-        unlockPanel();
-      } else {
-        if (errMsg) errMsg.style.display = 'block';
+      try {
+        const res = await fetch('/api/admin/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: enteredPin }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          adminToken = enteredPin;
+          unlockAdmin();
+          await loadAll();
+        } else {
+          if (errMsg) {
+            errMsg.textContent = data.error || 'Incorrect PIN. Please try again.';
+            errMsg.style.display = 'block';
+          }
+          if (pinInput) {
+            pinInput.value = '';
+            pinInput.focus();
+          }
+        }
+      } catch (err) {
+        if (errMsg) {
+          errMsg.textContent = 'Server connection error. Please try again.';
+          errMsg.style.display = 'block';
+        }
         if (pinInput) {
           pinInput.value = '';
           pinInput.focus();
@@ -76,98 +121,165 @@ function initAuth() {
   }
 }
 
-// Populate and Save Profile Form
-function populateProfileForm() {
-  const data = DataStore.get();
-  const prof = data.siteProfile || {};
+// Load all data from Cloudflare D1
+async function loadAll() {
+  try {
+    await populateProfileForm();
+    await populatePortfolioList();
+    await populatePricingForm();
+  } catch (err) {
+    console.error('Error loading admin data:', err);
+    showToast('Notice: ' + err.message);
+  }
+}
 
-  document.getElementById('prof-agency-name').value = prof.agencyName || '';
+// Populate and Save Profile Form
+async function populateProfileForm() {
+  let prof = {};
+  try {
+    prof = await apiJson('/api/business');
+  } catch (e) {
+    console.warn('Could not fetch business info:', e);
+  }
+
+  document.getElementById('prof-agency-name').value = prof.agency_name || 'GrowthMachine Studio';
   document.getElementById('prof-email').value = prof.email || '';
   document.getElementById('prof-phone').value = prof.phone || '';
   document.getElementById('prof-whatsapp').value = prof.whatsapp || '';
   document.getElementById('prof-tagline').value = prof.tagline || '';
   document.getElementById('prof-subheadline').value = prof.subheadline || '';
   document.getElementById('prof-location').value = prof.location || '';
-  document.getElementById('prof-pin').value = prof.adminPin || '19882020';
+  
+  // Set current PIN from session token
+  const pinField = document.getElementById('prof-pin');
+  if (pinField) {
+    pinField.value = adminToken || '';
+  }
+
+  // Cache pricing plans in memory for the profile save payload
+  if (prof.pricing_plans && Array.isArray(prof.pricing_plans)) {
+    window.__pricingPlans = prof.pricing_plans;
+  }
 
   const form = document.getElementById('profile-form');
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const currentData = DataStore.get();
-    const newPin = document.getElementById('prof-pin').value.trim();
-    if (!newPin) {
-      alert('Admin Security PIN cannot be empty.');
-      return;
-    }
+  if (form && form.dataset.listener !== '1') {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newPin = (document.getElementById('prof-pin').value || '').trim();
+      if (!newPin) {
+        alert('Admin Security PIN cannot be empty.');
+        return;
+      }
 
-    currentData.siteProfile = {
-      agencyName: document.getElementById('prof-agency-name').value.trim(),
-      email: document.getElementById('prof-email').value.trim(),
-      phone: document.getElementById('prof-phone').value.trim(),
-      whatsapp: document.getElementById('prof-whatsapp').value.trim().replace(/[^0-9]/g, ''),
-      tagline: document.getElementById('prof-tagline').value.trim(),
-      subheadline: document.getElementById('prof-subheadline').value.trim(),
-      location: document.getElementById('prof-location').value.trim(),
-      adminPin: newPin
-    };
+      const payload = {
+        agency_name: document.getElementById('prof-agency-name').value.trim(),
+        email: document.getElementById('prof-email').value.trim(),
+        phone: document.getElementById('prof-phone').value.trim(),
+        whatsapp: document.getElementById('prof-whatsapp').value.trim().replace(/[^0-9]/g, ''),
+        tagline: document.getElementById('prof-tagline').value.trim(),
+        subheadline: document.getElementById('prof-subheadline').value.trim(),
+        location: document.getElementById('prof-location').value.trim(),
+        pricing_plans: window.__pricingPlans || [],
+        admin_pin: newPin,
+      };
 
-    DataStore.save(currentData);
-    showToast('Business Profile & Admin Password updated successfully!');
-  });
+      try {
+        await apiJson('/api/admin/business', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+
+        // Update in-memory session token to the new PIN
+        adminToken = newPin;
+
+        // Keep local store in sync if present
+        if (typeof DataStore !== 'undefined') {
+          const local = DataStore.get();
+          local.siteProfile = {
+            agencyName: payload.agency_name,
+            email: payload.email,
+            phone: payload.phone,
+            whatsapp: payload.whatsapp,
+            tagline: payload.tagline,
+            subheadline: payload.subheadline,
+            location: payload.location,
+            adminPin: newPin,
+          };
+          DataStore.save(local);
+        }
+
+        showToast('Business Profile and Admin PIN permanently saved to Cloudflare database!');
+      } catch (err) {
+        showToast('Failed to save profile: ' + err.message);
+      }
+    });
+    form.dataset.listener = '1';
+  }
 }
 
 // Portfolio Projects Management
-function populatePortfolioList() {
-  const data = DataStore.get();
+async function populatePortfolioList() {
   const listEl = document.getElementById('admin-portfolio-list');
   if (!listEl) return;
 
-  const projects = data.portfolio || [];
-  if (projects.length === 0) {
+  try {
+    const projects = await apiJson('/api/listings');
+    currentListings = Array.isArray(projects) ? projects : [];
+  } catch (e) {
+    console.warn('Could not fetch listings:', e);
+    currentListings = [];
+  }
+
+  if (currentListings.length === 0) {
     listEl.innerHTML = `<p style="color: var(--text-dim); font-size: 14px;">No projects added yet. Click "+ Add New Client Project" to showcase your first client.</p>`;
     return;
   }
 
-  listEl.innerHTML = projects.map((p, idx) => `
+  listEl.innerHTML = currentListings.map((p) => `
     <div class="portfolio-manage-item">
-      <img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.title)}" class="portfolio-manage-thumb" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'120\\' height=\\'80\\' viewBox=\\'0 0 120 80\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23181b24\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23ffaa00\\' font-family=\\'sans-serif\\' font-size=\\'11\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>';">
+      <img src="${escapeHTML(p.image || '')}" alt="${escapeHTML(p.title || '')}" class="portfolio-manage-thumb" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'120\\' height=\\'80\\' viewBox=\\'0 0 120 80\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23181b24\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23ffaa00\\' font-family=\\'sans-serif\\' font-size=\\'11\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>No Image</text></svg>';">
       <div class="portfolio-manage-info">
-        <h4>${escapeHTML(p.title)}</h4>
+        <h4>${escapeHTML(p.title || '')}</h4>
         <div style="font-size: 13px; color: #ffaa00; margin-bottom: 4px;">Client: ${escapeHTML(p.client || '')} • <span style="color: var(--text-dim);">${escapeHTML(p.category || '')}</span></div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">${escapeHTML(p.desc || '')}</p>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">${escapeHTML(p.description || p.desc || '')}</p>
         <div>
-          <a href="${escapeHTML(p.url)}" target="_blank" style="font-size: 12px; color: var(--text-main); text-decoration: underline;">
-            🔗 ${escapeHTML(p.url)}
+          <a href="${escapeHTML(p.url || '')}" target="_blank" style="font-size: 12px; color: var(--text-main); text-decoration: underline;">
+            🔗 ${escapeHTML(p.url || '')}
           </a>
         </div>
       </div>
-      <div class="portfolio-manage-actions" style="display: flex; gap: 8px; flex-shrink: 0; align-items: flex-start;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="editPortfolioItem(${idx})" style="padding: 6px 14px; font-size: 12px; color: #ffaa00; border-color: rgba(255, 170, 0, 0.4);">✏️ Edit</button>
-        <button type="button" class="btn-danger" onclick="deletePortfolioItem(${idx})">Delete</button>
+      <div class="portfolio-manage-actions">
+        <button type="button" class="btn btn-outline btn-sm" onclick="editPortfolioItem('${escapeJS(p.id)}')" style="padding: 6px 14px; font-size: 12px; color: #ffaa00; border-color: rgba(255, 170, 0, 0.4);">✏️ Edit</button>
+        <button type="button" class="btn-danger" onclick="deletePortfolioItem('${escapeJS(p.id)}')">Delete</button>
       </div>
     </div>
   `).join('');
 }
 
-window.editPortfolioItem = function(index) {
-  const data = DataStore.get();
-  const p = (data.portfolio || [])[index];
-  if (!p) return;
+// Edit Portfolio Item
+window.editPortfolioItem = function (id) {
+  const p = currentListings.find((item) => String(item.id) === String(id));
+  if (!p) {
+    alert('Project not found');
+    return;
+  }
 
   const addBox = document.getElementById('add-project-box');
   const titleHeader = document.getElementById('project-form-title');
   const submitText = document.getElementById('proj-submit-text');
-  const editIndexInput = document.getElementById('proj-edit-index');
+  const editIdInput = document.getElementById('proj-edit-id');
 
   if (titleHeader) titleHeader.textContent = '✏️ Edit Project: ' + (p.title || '');
-  if (submitText) submitText.textContent = '💾 Update Project Changes';
-  if (editIndexInput) editIndexInput.value = index;
+  if (submitText) submitText.textContent = '💾 Save Project Changes';
+  if (editIdInput) editIdInput.value = p.id;
 
   document.getElementById('proj-title').value = p.title || '';
   document.getElementById('proj-client').value = p.client || '';
   document.getElementById('proj-url').value = p.url || '';
-  document.getElementById('proj-desc').value = p.desc || '';
-  document.getElementById('proj-tags').value = (p.tags || []).join(', ');
+  document.getElementById('proj-desc').value = p.description || p.desc || '';
+  
+  const tagsArr = Array.isArray(p.tags) ? p.tags : [];
+  document.getElementById('proj-tags').value = tagsArr.join(', ');
 
   // Category handling
   const catSelect = document.getElementById('proj-category');
@@ -199,7 +311,7 @@ window.editPortfolioItem = function(index) {
   // Preview Image handling
   if (p.image) {
     if (typeof window.setProjectImage === 'function') {
-      window.setProjectImage(p.image, 'Current Project Image', 'Keep current or select new image/URL');
+      window.setProjectImage(p.image, 'Current Project Screenshot', 'Ready to update or keep current');
     }
     const urlInput = document.getElementById('proj-image-url-input');
     if (urlInput && !p.image.startsWith('data:')) {
@@ -214,18 +326,19 @@ window.editPortfolioItem = function(index) {
   }
 };
 
-window.deletePortfolioItem = function(index) {
-  if (confirm('Are you sure you want to remove this project from your portfolio?')) {
-    const data = DataStore.get();
-    data.portfolio.splice(index, 1);
-    DataStore.save(data);
-    populatePortfolioList();
-    showToast('Project removed successfully.');
+// Delete Portfolio Item
+window.deletePortfolioItem = async function (id) {
+  if (!confirm('Are you sure you want to remove this project from your portfolio?')) return;
+  try {
+    await apiRequest(`/api/admin/listings/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    showToast('Project removed successfully from Cloudflare database.');
+    await populatePortfolioList();
+  } catch (err) {
+    showToast('Failed to delete: ' + err.message);
   }
 };
 
 function bindEvents() {
-  // Toggle Add Project Box
   const toggleBtn = document.getElementById('toggle-add-project-btn');
   const cancelBtn = document.getElementById('cancel-add-project');
   const addBox = document.getElementById('add-project-box');
@@ -279,11 +392,10 @@ function bindEvents() {
     if (previewCard) previewCard.style.display = 'none';
   }
 
-  // Expose helpers for edit mode
   window.setProjectImage = setImage;
   window.clearProjectImage = clearImage;
 
-  // Optimize & resize image file to prevent localStorage quota issues
+  // Optimize & resize image file to keep payload fast and snappy
   function handleImageFile(file) {
     if (!file || !file.type.startsWith('image/')) {
       alert('Please select a valid image file (JPG, PNG, WebP, SVG, GIF, etc.).');
@@ -361,7 +473,7 @@ function bindEvents() {
       }
     });
 
-    ['dragenter', 'dragover'].forEach(evt => {
+    ['dragenter', 'dragover'].forEach((evt) => {
       dropzone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -369,7 +481,7 @@ function bindEvents() {
       });
     });
 
-    ['dragleave', 'drop'].forEach(evt => {
+    ['dragleave', 'drop'].forEach((evt) => {
       dropzone.addEventListener(evt, (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -400,10 +512,11 @@ function bindEvents() {
   }
 
   function resetProjectForm() {
+    const newProjectForm = document.getElementById('new-project-form');
     if (newProjectForm) newProjectForm.reset();
     clearImage();
-    const editIndexInput = document.getElementById('proj-edit-index');
-    if (editIndexInput) editIndexInput.value = '-1';
+    const editIdInput = document.getElementById('proj-edit-id');
+    if (editIdInput) editIdInput.value = '';
     const titleHeader = document.getElementById('project-form-title');
     const submitText = document.getElementById('proj-submit-text');
     if (titleHeader) titleHeader.textContent = 'Add New Live Project';
@@ -436,12 +549,12 @@ function bindEvents() {
 
   // Handle New or Edited Project Submission
   const newProjectForm = document.getElementById('new-project-form');
-  if (newProjectForm) {
-    newProjectForm.addEventListener('submit', (e) => {
+  if (newProjectForm && newProjectForm.dataset.listener !== '1') {
+    newProjectForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('proj-title').value.trim();
       const client = document.getElementById('proj-client').value.trim();
-      
+
       let category = document.getElementById('proj-category').value;
       if (category === '__custom__') {
         const customCatVal = (document.getElementById('proj-category-custom').value || '').trim();
@@ -458,88 +571,126 @@ function bindEvents() {
 
       const desc = document.getElementById('proj-desc').value.trim();
       const rawTags = document.getElementById('proj-tags').value.trim();
-      const tags = rawTags ? rawTags.split(',').map(t => t.trim()) : ['Live Website'];
+      const tags = rawTags ? rawTags.split(',').map((t) => t.trim()).filter(Boolean) : ['Live Website'];
 
-      const editIndexInput = document.getElementById('proj-edit-index');
-      const editIndex = editIndexInput ? parseInt(editIndexInput.value, 10) : -1;
+      const editId = (document.getElementById('proj-edit-id').value || '').trim();
 
-      const data = DataStore.get();
-      if (!data.portfolio) data.portfolio = [];
+      const payload = {
+        title,
+        client,
+        category,
+        url,
+        image,
+        description: desc,
+        tags,
+      };
 
-      if (editIndex >= 0 && editIndex < data.portfolio.length) {
-        // Update existing project
-        const existingId = data.portfolio[editIndex].id || ('proj-' + Date.now());
-        data.portfolio[editIndex] = {
-          id: existingId,
-          title,
-          client,
-          category,
-          url,
-          image,
-          desc,
-          tags
-        };
-        DataStore.save(data);
-        showToast('Project updated successfully!');
-      } else {
-        // Create new project
-        const newProj = {
-          id: 'proj-' + Date.now(),
-          title,
-          client,
-          category,
-          url,
-          image,
-          desc,
-          tags
-        };
-        data.portfolio.unshift(newProj);
-        DataStore.save(data);
-        showToast('New project published to live showcase!');
+      try {
+        if (editId) {
+          // Update existing project in D1
+          await apiJson(`/api/admin/listings/${encodeURIComponent(editId)}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+          });
+          showToast('Project updated successfully in Cloudflare database!');
+        } else {
+          // Add new project in D1
+          await apiJson('/api/admin/listings', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          });
+          showToast('New project published to live showcase!');
+        }
+
+        resetProjectForm();
+        addBox.style.display = 'none';
+        await populatePortfolioList();
+      } catch (err) {
+        showToast('Error saving project: ' + err.message);
       }
-
-      resetProjectForm();
-      addBox.style.display = 'none';
-      populatePortfolioList();
     });
+    newProjectForm.dataset.listener = '1';
   }
 }
 
 // Pricing Form Manager
-function populatePricingForm() {
-  const data = DataStore.get();
+async function populatePricingForm() {
   const container = document.getElementById('pricing-fields-container');
-  if (!container || !data.pricingPlans) return;
+  if (!container) return;
 
-  container.innerHTML = data.pricingPlans.map((plan, idx) => `
+  let prof = {};
+  try {
+    prof = await apiJson('/api/business');
+  } catch (e) {
+    console.warn('Could not load pricing plans:', e);
+  }
+
+  const plans = (prof && Array.isArray(prof.pricing_plans) && prof.pricing_plans.length > 0)
+    ? prof.pricing_plans
+    : [
+        {
+          id: 'starter',
+          name: 'Starter Landing Page',
+          price: '₹2,999',
+          desc: 'Ideal for local businesses, ad campaigns, and single-service lead funnels.',
+        },
+        {
+          id: 'business',
+          name: 'Complete Business Suite',
+          price: '₹6,499',
+          desc: 'Full multi-section website for law chambers, clinics, real estate, and agencies.',
+        },
+        {
+          id: 'ecommerce',
+          name: 'Catalog / D2C Store',
+          price: '₹11,999',
+          desc: 'Tailored for beauty products, clothing, and retail catalog businesses.',
+        },
+      ];
+
+  window.__pricingPlans = plans;
+
+  container.innerHTML = plans.map((plan, idx) => `
     <div class="form-group" style="background: var(--bg-card); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
-      <label style="color: #ffaa00; margin-bottom: 8px;">${escapeHTML(plan.name)}</label>
+      <label style="color: #ffaa00; margin-bottom: 8px;">${escapeHTML(plan.name || `Plan ${idx + 1}`)}</label>
       <div style="margin-bottom: 8px;">
         <label style="font-size: 11px;">Package Price</label>
-        <input type="text" id="plan-price-${idx}" value="${escapeHTML(plan.price)}" placeholder="₹3,999" required>
+        <input type="text" id="plan-price-${idx}" value="${escapeHTML(plan.price || '')}" placeholder="₹3,999" required>
       </div>
       <div>
         <label style="font-size: 11px;">Brief Description</label>
-        <input type="text" id="plan-desc-${idx}" value="${escapeHTML(plan.desc)}" required>
+        <input type="text" id="plan-desc-${idx}" value="${escapeHTML(plan.desc || '')}" required>
       </div>
     </div>
   `).join('');
 
   const pricingForm = document.getElementById('pricing-form');
-  if (pricingForm) {
-    pricingForm.addEventListener('submit', (e) => {
+  if (pricingForm && pricingForm.dataset.listener !== '1') {
+    pricingForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const currentData = DataStore.get();
-      currentData.pricingPlans.forEach((plan, idx) => {
+      const updatedPlans = (window.__pricingPlans || []).map((plan, idx) => {
         const priceInput = document.getElementById(`plan-price-${idx}`);
         const descInput = document.getElementById(`plan-desc-${idx}`);
-        if (priceInput) plan.price = priceInput.value.trim();
-        if (descInput) plan.desc = descInput.value.trim();
+        return {
+          ...plan,
+          price: priceInput ? priceInput.value.trim() : plan.price,
+          desc: descInput ? descInput.value.trim() : plan.desc,
+        };
       });
 
-      DataStore.save(currentData);
-      showToast('Pricing plans updated successfully!');
+      window.__pricingPlans = updatedPlans;
+
+      try {
+        await apiJson('/api/admin/business', {
+          method: 'POST',
+          body: JSON.stringify({ pricing_plans: updatedPlans }),
+        });
+        showToast('Pricing plans updated successfully in Cloudflare database!');
+      } catch (err) {
+        showToast('Failed to save pricing: ' + err.message);
+      }
     });
+    pricingForm.dataset.listener = '1';
   }
 }
 
@@ -563,4 +714,9 @@ function escapeHTML(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function escapeJS(str) {
+  if (!str) return '';
+  return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }

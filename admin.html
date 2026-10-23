@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GrowthMachine Studio — Studio Management Portal</title>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -118,6 +119,7 @@
       display: flex;
       gap: 8px;
       flex-shrink: 0;
+      align-items: flex-start;
     }
     .btn-danger {
       background: rgba(229, 72, 77, 0.15);
@@ -248,7 +250,7 @@
     <div class="auth-box">
       <a href="index.html" class="auth-close-btn" title="Cancel and return to home page">✕</a>
       <div class="logo-icon" style="margin: 0 auto 16px; width: 48px; height: 48px; font-size: 24px;">🔒</div>
-      <h3>Welcome Sudhir Kumar Solanki</h3>
+      <h3>Studio Owner Access</h3>
       <p>Enter your Studio Owner PIN to manage business contacts, pricing, and live client projects.</p>
       <form id="auth-form">
         <div class="form-group" style="margin-bottom: 16px;">
@@ -288,10 +290,10 @@
     <div class="admin-card">
       <div class="admin-card-header">
         <h2><span>📞</span> Business Information & Direct Channels</h2>
-        <span class="badge" style="margin: 0;">Realtime Sync</span>
+        <span class="badge" style="margin: 0;">Server SQL Database</span>
       </div>
       <p style="margin-bottom: 24px; font-size: 14px;">
-        Update your WhatsApp number, agency email, phone, and headlines. All changes reflect instantly on your live landing page.
+        Update your WhatsApp number, agency email, phone, headlines, and Admin PIN. All changes save permanently to the Cloudflare database and reflect universally across all devices.
       </p>
 
       <form id="profile-form">
@@ -327,8 +329,8 @@
           </div>
           <div class="form-group">
             <label for="prof-pin">Admin Security PIN</label>
-            <input type="text" id="prof-pin" style="letter-spacing: 0.1em;">
-            <small style="color: var(--text-dim); font-size: 11px;">Used to unlock this Admin panel</small>
+            <input type="text" id="prof-pin" style="letter-spacing: 0.1em;" required>
+            <small style="color: var(--text-dim); font-size: 11px;">Universal across all devices. Saved permanently to the server database.</small>
           </div>
         </div>
 
@@ -349,14 +351,14 @@
         </button>
       </div>
       <p style="margin-bottom: 20px; font-size: 14px;">
-        Showcase new websites you build in the future. Add live links (GitHub Pages, Cloudflare, Vercel), client names, and screenshots.
+        Showcase new websites you build in the future. Add live links (GitHub Pages, Cloudflare, Vercel), client names, screenshots, and edit or delete anytime.
       </p>
 
       <!-- Add / Edit Project Sub-Form (Hidden by default) -->
       <div id="add-project-box" style="display: none; background: var(--bg-card); border: 1px dashed var(--accent-orange); border-radius: var(--radius-md); padding: 24px; margin-bottom: 24px;">
         <h3 id="project-form-title" style="font-size: 1.1rem; margin-bottom: 16px; color: #ffaa00;">Add New Live Project</h3>
         <form id="new-project-form">
-          <input type="hidden" id="proj-edit-index" value="-1">
+          <input type="hidden" id="proj-edit-id" value="">
           <div class="form-grid">
             <div class="form-group">
               <label for="proj-title">Project Name</label>

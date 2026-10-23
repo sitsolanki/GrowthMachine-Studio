@@ -1,36 +1,65 @@
 // GrowthMachine Studio Main Frontend Logic
+// Fetches live data from the Worker API (/api/business, /api/listings)
+
+const API_BASE = '';
+
+async function fetchJSON(path) {
+  const res = await fetch(`${API_BASE}${path}`);
+  if (!res.ok) throw new Error(`Request failed for ${path}: ${res.status}`);
+  return res.json();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   renderPageContent();
   setupFAQ();
-  // Fetch latest content from Cloudflare Worker KV / Server Edge in background
-  if (typeof DataStore !== 'undefined' && DataStore.fetchFromServer) {
-    DataStore.fetchFromServer(() => {
-      renderPageContent();
-    });
-  }
 });
 
-function renderPageContent() {
-  const data = DataStore.get();
-  const profile = data.siteProfile || {};
+async function renderPageContent() {
+  const [profileResult, listingsResult] = await Promise.allSettled([
+    fetchJSON('/api/business'),
+    fetchJSON('/api/listings'),
+  ]);
+  const defaults = typeof DataStore !== 'undefined' ? DataStore.get() : {};
+  const remoteProfile = profileResult.status === 'fulfilled' && profileResult.value
+    ? profileResult.value
+    : {};
+  const profile = {
+    agency_name: defaults.siteProfile?.agencyName || 'GrowthMachine Studio',
+    email: defaults.siteProfile?.email || 'studio.growthmachine@gmail.com',
+    phone: defaults.siteProfile?.phone || '+91 75575 75514',
+    whatsapp: defaults.siteProfile?.whatsapp || '917557575514',
+    tagline: defaults.siteProfile?.tagline || '',
+    subheadline: defaults.siteProfile?.subheadline || '',
+    location: defaults.siteProfile?.location || '',
+    ...remoteProfile,
+  };
+  const remoteListings = listingsResult.status === 'fulfilled' && Array.isArray(listingsResult.value)
+    ? listingsResult.value
+    : [];
+  const listings = remoteListings.length ? remoteListings : (defaults.portfolio || []);
+  if (profileResult.status === 'rejected') console.error('Could not load business profile:', profileResult.reason);
+  if (listingsResult.status === 'rejected') console.error('Could not load portfolio listings:', listingsResult.reason);
+
+  // WhatsApp link built from profile
+  const cleanPhone = (profile.whatsapp || '917557575514').replace(/[^0-9]/g, '');
+  const defaultMsg = encodeURIComponent(`Hi ${profile.agency_name || 'GrowthMachine Studio'}, I want to build a website/landing page for my business. Can we discuss?`);
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${defaultMsg}`;
 
   // Update Dynamic Agency Text
   const agencyNameElems = ['nav-agency-name', 'footer-agency-name', 'footer-copy-agency'];
-  agencyNameElems.forEach(id => {
+  agencyNameElems.forEach((id) => {
     const el = document.getElementById(id);
-    if (el) {
-      if (id === 'nav-agency-name') {
-        const raw = profile.agencyName || 'GrowthMachine Studio';
-        if (raw.toLowerCase().endsWith('studio')) {
-          const prefix = raw.slice(0, raw.length - 6).trim();
-          el.innerHTML = `${escapeHTML(prefix)} <span class="logo-text-accent">Studio</span>`;
-        } else {
-          el.textContent = raw;
-        }
+    if (!el) return;
+    const raw = profile.agency_name || 'GrowthMachine Studio';
+    if (id === 'nav-agency-name') {
+      if (raw.toLowerCase().endsWith('studio')) {
+        const prefix = raw.slice(0, raw.length - 6).trim();
+        el.innerHTML = `${escapeHTML(prefix)} <span class="logo-text-accent">Studio</span>`;
       } else {
-        el.textContent = profile.agencyName || 'GrowthMachine Studio';
+        el.textContent = raw;
       }
+    } else {
+      el.textContent = raw;
     }
   });
 
@@ -43,13 +72,8 @@ function renderPageContent() {
   const footerLoc = document.getElementById('footer-location');
   if (footerLoc && profile.location) footerLoc.textContent = `📍 ${profile.location}`;
 
-  // WhatsApp link generator
-  const cleanPhone = (profile.whatsapp || '917557575514').replace(/[^0-9]/g, '');
-  const defaultMsg = encodeURIComponent(`Hi ${profile.agencyName || 'GrowthMachine Studio'}, I want to build a website/landing page for my business. Can we discuss?`);
-  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${defaultMsg}`;
-
   // Bind WhatsApp buttons
-  ['header-whatsapp-btn', 'hero-whatsapp-btn', 'cta-whatsapp-btn', 'footer-whatsapp-link', 'floating-whatsapp-btn'].forEach(id => {
+  ['hero-whatsapp-btn', 'cta-whatsapp-btn', 'footer-whatsapp-link', 'floating-whatsapp-btn'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.href = whatsappUrl;
   });
@@ -69,10 +93,16 @@ function renderPageContent() {
     phoneText.textContent = profile.phone || '+91 75575 75514';
   }
 
-  // Render Stats
+  // Render Stats (static)
+  const stats = [
+    { value: '24-48h', label: 'Superfast Turnaround' },
+    { value: '100%', label: 'Ownership Belongs To You' },
+    { value: 'SEO-Ready', label: 'Built for Google Visibility' },
+    { value: 'Full Guide', label: 'Domain & Hosting Assistance' },
+  ];
   const statsContainer = document.getElementById('stats-container');
-  if (statsContainer && data.stats) {
-    statsContainer.innerHTML = data.stats.map(s => `
+  if (statsContainer) {
+    statsContainer.innerHTML = stats.map((s) => `
       <div class="stat-item">
         <h3>${escapeHTML(s.value)}</h3>
         <p>${escapeHTML(s.label)}</p>
@@ -80,21 +110,21 @@ function renderPageContent() {
     `).join('');
   }
 
-  // Render Portfolio Case Studies
+  // Render Portfolio Case Studies from listings API
   const portfolioContainer = document.getElementById('portfolio-container');
-  if (portfolioContainer && data.portfolio) {
-    portfolioContainer.innerHTML = data.portfolio.map(item => `
+  if (portfolioContainer) {
+    portfolioContainer.innerHTML = listings.map((item) => `
       <div class="portfolio-card">
         <div class="portfolio-preview">
-          <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'800\\' height=\\'500\\' viewBox=\\'0 0 800 500\\'><rect width=\\'100%\\' height=\\'100%\\' fill=\\'%23181b24\\'/><text x=\\'50%\\' y=\\'50%\\' fill=\\'%23ffaa00\\' font-family=\\'sans-serif\\' font-size=\\'22\\' text-anchor=\\'middle\\' dominant-baseline=\\'middle\\'>${escapeHTML(item.title)}</text></svg>';">
+          <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.title)}" loading="lazy">
           <div class="portfolio-badge">${escapeHTML(item.category || 'Live Project')}</div>
         </div>
         <div class="portfolio-body">
           <h3 class="portfolio-title">${escapeHTML(item.title)}</h3>
           <div class="portfolio-client">Client: ${escapeHTML(item.client || 'Verified Client')}</div>
-          <p class="portfolio-desc">${escapeHTML(item.desc)}</p>
+          <p class="portfolio-desc">${escapeHTML(item.description || item.desc || '')}</p>
           <div class="portfolio-tags">
-            ${(item.tags || []).map(t => `<span class="portfolio-tag">${escapeHTML(t)}</span>`).join('')}
+            ${(item.tags || []).map((t) => `<span class="portfolio-tag">${escapeHTML(t)}</span>`).join('')}
           </div>
           <div class="portfolio-footer">
             <a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="flex: 1;">
@@ -109,10 +139,32 @@ function renderPageContent() {
     `).join('');
   }
 
-  // Render Services
+  // Render Services (static)
+  const services = [
+    {
+      icon: '⚡',
+      title: 'Landing Page Design',
+      desc: 'Conversion-focused landing pages for local services, campaigns and product launches, with mobile-friendly layouts and direct call or WhatsApp actions.',
+    },
+    {
+      icon: '🏛️',
+      title: 'Business Website Development',
+      desc: 'Custom websites for professionals and local businesses, including advocates, clinics, consultants and real estate services.',
+    },
+    {
+      icon: '🛍️',
+      title: 'E-commerce Catalog Websites',
+      desc: 'Product catalogues and lightweight online storefronts that help customers explore products and contact your business to order.',
+    },
+    {
+      icon: '⚙️',
+      title: 'Website Launch Support',
+      desc: 'Practical help with domain, hosting and launch setup, plus a responsive website designed to work across phones, tablets and desktops.',
+    },
+  ];
   const servicesContainer = document.getElementById('services-container');
-  if (servicesContainer && data.services) {
-    servicesContainer.innerHTML = data.services.map(srv => `
+  if (servicesContainer) {
+    servicesContainer.innerHTML = services.map((srv) => `
       <div class="service-card">
         <div class="service-icon">${escapeHTML(srv.icon || '⚡')}</div>
         <h3 class="service-title">${escapeHTML(srv.title)}</h3>
@@ -121,10 +173,13 @@ function renderPageContent() {
     `).join('');
   }
 
-  // Render Pricing Packages
+  // Render Pricing Packages from business_info.pricing_plans
   const pricingContainer = document.getElementById('pricing-container');
-  if (pricingContainer && data.pricingPlans) {
-    pricingContainer.innerHTML = data.pricingPlans.map(plan => `
+  if (pricingContainer) {
+    const plans = Array.isArray(profile.pricing_plans) && profile.pricing_plans.length
+      ? profile.pricing_plans
+      : (defaults.pricingPlans || []);
+    if (plans.length) pricingContainer.innerHTML = plans.map((plan) => `
       <div class="pricing-card ${plan.popular ? 'featured' : ''}">
         ${plan.badge ? `<div class="pricing-pill">${escapeHTML(plan.badge)}</div>` : ''}
         <div class="pricing-header">
@@ -136,7 +191,7 @@ function renderPageContent() {
           </div>
         </div>
         <ul class="plan-features">
-          ${(plan.features || []).map(f => `<li>${escapeHTML(f)}</li>`).join('')}
+          ${(plan.features || []).map((f) => `<li>${escapeHTML(f)}</li>`).join('')}
         </ul>
         <a href="${whatsappUrl}&text=${encodeURIComponent('Hi, I am interested in the "' + plan.name + ' (' + plan.price + ')" package for my business.')}" target="_blank" class="btn ${plan.popular ? 'btn-primary' : 'btn-outline'}" style="width: 100%;">
           <span>⚡ Select Package & WhatsApp</span>
@@ -145,21 +200,6 @@ function renderPageContent() {
     `).join('');
   }
 
-  // Render FAQ
-  const faqContainer = document.getElementById('faq-container');
-  if (faqContainer && data.faq) {
-    faqContainer.innerHTML = data.faq.map((item, idx) => `
-      <div class="faq-item ${idx === 0 ? 'active' : ''}">
-        <button class="faq-question">
-          <span>${escapeHTML(item.q)}</span>
-          <span class="faq-icon">+</span>
-        </button>
-        <div class="faq-answer">
-          <p>${escapeHTML(item.a)}</p>
-        </div>
-      </div>
-    `).join('');
-  }
 }
 
 function setupFAQ() {
@@ -169,6 +209,7 @@ function setupFAQ() {
     const item = btn.closest('.faq-item');
     if (item) {
       item.classList.toggle('active');
+      btn.setAttribute('aria-expanded', String(item.classList.contains('active')));
     }
   });
 }

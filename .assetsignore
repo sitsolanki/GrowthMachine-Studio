@@ -1,0 +1,13 @@
+.assetsignore
+.git/
+.gitignore
+.wrangler/
+node_modules/
+src/
+schema.sql
+migrate.mjs
+README.md
+.npmrc
+package.json
+package-lock.json
+wrangler.toml

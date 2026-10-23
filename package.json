@@ -1,0 +1,9 @@
+{
+  "name": "growthmachine-studio",
+  "version": "1.0.0",
+  "description": "GrowthMachine Studio - Cloudflare Worker + D1",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
