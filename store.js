@@ -1,5 +1,10 @@
 // GrowthMachine Studio Content Store & Sync Manager
 const CONTENT_STORAGE_KEY = 'gms_site_content_v1';
+const CF_WORKER_KEY = 'gms_cf_worker_endpoint';
+
+// Optional: Pre-configure your deployed Cloudflare Worker URL here
+// Example: "https://growthmachine-api.<your-subdomain>.workers.dev"
+const DEFAULT_CF_WORKER_URL = "";
 
 // Default Fallback Data
 const DEFAULT_DATA = {
@@ -181,10 +186,97 @@ const DataStore = {
   save: function(newData) {
     try {
       localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(newData));
+      // Auto-sync in background to Cloudflare Worker KV if endpoint configured
+      this.syncToCloudflareKV(newData).catch(e => console.warn('Background KV sync notice:', e));
       return true;
     } catch (e) {
       console.error('LocalStorage write error:', e);
       return false;
+    }
+  },
+
+  getWorkerUrl: function() {
+    try {
+      return localStorage.getItem(CF_WORKER_KEY) || DEFAULT_CF_WORKER_URL || '';
+    } catch (e) {
+      return DEFAULT_CF_WORKER_URL || '';
+    }
+  },
+
+  setWorkerUrl: function(url) {
+    try {
+      if (url) {
+        localStorage.setItem(CF_WORKER_KEY, url.trim().replace(/\/+$/, ''));
+      } else {
+        localStorage.removeItem(CF_WORKER_KEY);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // Fetch latest data and active PIN from Cloudflare Worker KV (or data/content.json fallback)
+  fetchFromServer: async function(callback) {
+    const workerUrl = this.getWorkerUrl();
+    const endpoint = workerUrl ? workerUrl : 'data/content.json?t=' + Date.now();
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store'
+      });
+
+      if (res.ok) {
+        const serverData = await res.json();
+        if (serverData && typeof serverData === 'object' && serverData.siteProfile) {
+          const currentLocal = this.get();
+          const merged = {
+            ...currentLocal,
+            ...serverData,
+            siteProfile: {
+              ...currentLocal.siteProfile,
+              ...(serverData.siteProfile || {})
+            }
+          };
+          localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(merged));
+          if (typeof callback === 'function') callback(merged);
+          return merged;
+        }
+      }
+    } catch (err) {
+      console.info('Cloud sync fetch note: using local cache (Worker offline or not configured yet)');
+    }
+
+    const fallback = this.get();
+    if (typeof callback === 'function') callback(fallback);
+    return fallback;
+  },
+
+  // Push updated content and password to Cloudflare Worker KV
+  syncToCloudflareKV: async function(data) {
+    const workerUrl = this.getWorkerUrl();
+    if (!workerUrl) return { success: false, reason: 'No Worker URL configured' };
+
+    try {
+      const res = await fetch(workerUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        return { success: true, message: result.message || 'Synced to Cloudflare KV Edge' };
+      } else {
+        return { success: false, reason: `HTTP ${res.status}: ${res.statusText}` };
+      }
+    } catch (err) {
+      return { success: false, reason: err.message };
     }
   },
 

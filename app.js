@@ -3,6 +3,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   renderPageContent();
   setupFAQ();
+  // Fetch latest content from Cloudflare Worker KV / Server Edge in background
+  if (typeof DataStore !== 'undefined' && DataStore.fetchFromServer) {
+    DataStore.fetchFromServer(() => {
+      renderPageContent();
+    });
+  }
 });
 
 function renderPageContent() {

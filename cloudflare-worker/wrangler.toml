@@ -1,0 +1,9 @@
+name = "growthmachine-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# KV Namespace binding for universal real-time data storage
+# To create KV: npx wrangler kv namespace create GMS_KV
+[[kv_namespaces]]
+binding = "GMS_KV"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
