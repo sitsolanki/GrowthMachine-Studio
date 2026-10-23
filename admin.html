@@ -352,10 +352,11 @@
         Showcase new websites you build in the future. Add live links (GitHub Pages, Cloudflare, Vercel), client names, and screenshots.
       </p>
 
-      <!-- Add Project Sub-Form (Hidden by default) -->
+      <!-- Add / Edit Project Sub-Form (Hidden by default) -->
       <div id="add-project-box" style="display: none; background: var(--bg-card); border: 1px dashed var(--accent-orange); border-radius: var(--radius-md); padding: 24px; margin-bottom: 24px;">
-        <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: #ffaa00;">Add New Live Project</h3>
+        <h3 id="project-form-title" style="font-size: 1.1rem; margin-bottom: 16px; color: #ffaa00;">Add New Live Project</h3>
         <form id="new-project-form">
+          <input type="hidden" id="proj-edit-index" value="-1">
           <div class="form-grid">
             <div class="form-group">
               <label for="proj-title">Project Name</label>
@@ -448,8 +449,8 @@
             </div>
           </div>
           <div class="admin-actions">
-            <button type="submit" class="btn btn-primary btn-sm">
-              <span>✓ Add & Publish Project</span>
+            <button type="submit" id="proj-submit-btn" class="btn btn-primary btn-sm">
+              <span id="proj-submit-text">✓ Add & Publish Project</span>
             </button>
             <button type="button" id="cancel-add-project" class="btn btn-outline btn-sm">
               <span>Cancel</span>

@@ -141,12 +141,78 @@ function populatePortfolioList() {
           </a>
         </div>
       </div>
-      <div class="portfolio-manage-actions">
-        <button class="btn-danger" onclick="deletePortfolioItem(${idx})">Delete</button>
+      <div class="portfolio-manage-actions" style="display: flex; gap: 8px; flex-shrink: 0; align-items: flex-start;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="editPortfolioItem(${idx})" style="padding: 6px 14px; font-size: 12px; color: #ffaa00; border-color: rgba(255, 170, 0, 0.4);">✏️ Edit</button>
+        <button type="button" class="btn-danger" onclick="deletePortfolioItem(${idx})">Delete</button>
       </div>
     </div>
   `).join('');
 }
+
+window.editPortfolioItem = function(index) {
+  const data = DataStore.get();
+  const p = (data.portfolio || [])[index];
+  if (!p) return;
+
+  const addBox = document.getElementById('add-project-box');
+  const titleHeader = document.getElementById('project-form-title');
+  const submitText = document.getElementById('proj-submit-text');
+  const editIndexInput = document.getElementById('proj-edit-index');
+
+  if (titleHeader) titleHeader.textContent = '✏️ Edit Project: ' + (p.title || '');
+  if (submitText) submitText.textContent = '💾 Update Project Changes';
+  if (editIndexInput) editIndexInput.value = index;
+
+  document.getElementById('proj-title').value = p.title || '';
+  document.getElementById('proj-client').value = p.client || '';
+  document.getElementById('proj-url').value = p.url || '';
+  document.getElementById('proj-desc').value = p.desc || '';
+  document.getElementById('proj-tags').value = (p.tags || []).join(', ');
+
+  // Category handling
+  const catSelect = document.getElementById('proj-category');
+  const catCustom = document.getElementById('proj-category-custom');
+  if (catSelect) {
+    let matched = false;
+    for (let i = 0; i < catSelect.options.length; i++) {
+      if (catSelect.options[i].value === p.category) {
+        catSelect.selectedIndex = i;
+        matched = true;
+        break;
+      }
+    }
+
+    if (matched) {
+      if (catCustom) {
+        catCustom.style.display = 'none';
+        catCustom.value = '';
+      }
+    } else {
+      catSelect.value = '__custom__';
+      if (catCustom) {
+        catCustom.style.display = 'block';
+        catCustom.value = p.category || '';
+      }
+    }
+  }
+
+  // Preview Image handling
+  if (p.image) {
+    if (typeof window.setProjectImage === 'function') {
+      window.setProjectImage(p.image, 'Current Project Image', 'Keep current or select new image/URL');
+    }
+    const urlInput = document.getElementById('proj-image-url-input');
+    if (urlInput && !p.image.startsWith('data:')) {
+      urlInput.value = p.image;
+    }
+  }
+
+  if (addBox) {
+    addBox.style.display = 'block';
+    addBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('proj-title').focus();
+  }
+};
 
 window.deletePortfolioItem = function(index) {
   if (confirm('Are you sure you want to remove this project from your portfolio?')) {
@@ -212,6 +278,10 @@ function bindEvents() {
     if (previewThumb) previewThumb.src = '';
     if (previewCard) previewCard.style.display = 'none';
   }
+
+  // Expose helpers for edit mode
+  window.setProjectImage = setImage;
+  window.clearProjectImage = clearImage;
 
   // Optimize & resize image file to prevent localStorage quota issues
   function handleImageFile(file) {
@@ -329,11 +399,30 @@ function bindEvents() {
     removeBtn.addEventListener('click', clearImage);
   }
 
+  function resetProjectForm() {
+    if (newProjectForm) newProjectForm.reset();
+    clearImage();
+    const editIndexInput = document.getElementById('proj-edit-index');
+    if (editIndexInput) editIndexInput.value = '-1';
+    const titleHeader = document.getElementById('project-form-title');
+    const submitText = document.getElementById('proj-submit-text');
+    if (titleHeader) titleHeader.textContent = 'Add New Live Project';
+    if (submitText) submitText.textContent = '✓ Add & Publish Project';
+    if (catCustom) {
+      catCustom.style.display = 'none';
+      catCustom.value = '';
+    }
+  }
+
   if (toggleBtn && addBox) {
     toggleBtn.addEventListener('click', () => {
-      addBox.style.display = addBox.style.display === 'none' ? 'block' : 'none';
-      if (addBox.style.display === 'block') {
+      const isOpening = addBox.style.display === 'none';
+      if (isOpening) {
+        resetProjectForm();
+        addBox.style.display = 'block';
         document.getElementById('proj-title').focus();
+      } else {
+        addBox.style.display = 'none';
       }
     });
   }
@@ -341,15 +430,11 @@ function bindEvents() {
   if (cancelBtn && addBox) {
     cancelBtn.addEventListener('click', () => {
       addBox.style.display = 'none';
-      clearImage();
-      if (catCustom) {
-        catCustom.style.display = 'none';
-        catCustom.value = '';
-      }
+      resetProjectForm();
     });
   }
 
-  // Handle New Project Submission
+  // Handle New or Edited Project Submission
   const newProjectForm = document.getElementById('new-project-form');
   if (newProjectForm) {
     newProjectForm.addEventListener('submit', (e) => {
@@ -375,31 +460,47 @@ function bindEvents() {
       const rawTags = document.getElementById('proj-tags').value.trim();
       const tags = rawTags ? rawTags.split(',').map(t => t.trim()) : ['Live Website'];
 
-      const newProj = {
-        id: 'proj-' + Date.now(),
-        title,
-        client,
-        category,
-        url,
-        image,
-        desc,
-        tags
-      };
+      const editIndexInput = document.getElementById('proj-edit-index');
+      const editIndex = editIndexInput ? parseInt(editIndexInput.value, 10) : -1;
 
       const data = DataStore.get();
       if (!data.portfolio) data.portfolio = [];
-      data.portfolio.unshift(newProj); // Add to top
-      DataStore.save(data);
 
-      newProjectForm.reset();
-      clearImage();
-      if (catCustom) {
-        catCustom.style.display = 'none';
-        catCustom.value = '';
+      if (editIndex >= 0 && editIndex < data.portfolio.length) {
+        // Update existing project
+        const existingId = data.portfolio[editIndex].id || ('proj-' + Date.now());
+        data.portfolio[editIndex] = {
+          id: existingId,
+          title,
+          client,
+          category,
+          url,
+          image,
+          desc,
+          tags
+        };
+        DataStore.save(data);
+        showToast('Project updated successfully!');
+      } else {
+        // Create new project
+        const newProj = {
+          id: 'proj-' + Date.now(),
+          title,
+          client,
+          category,
+          url,
+          image,
+          desc,
+          tags
+        };
+        data.portfolio.unshift(newProj);
+        DataStore.save(data);
+        showToast('New project published to live showcase!');
       }
+
+      resetProjectForm();
       addBox.style.display = 'none';
       populatePortfolioList();
-      showToast('New project published to live showcase!');
     });
   }
 }
