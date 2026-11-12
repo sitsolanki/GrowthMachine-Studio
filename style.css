@@ -946,3 +946,197 @@ p {
     padding: 40px 20px;
   }
 }
+
+/* ==========================================================================
+   Client Website Pricing & Hosting Strategy Section Styling
+   ========================================================================== */
+.strategy-summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  position: relative;
+  transition: var(--transition);
+}
+
+.strategy-summary-card:hover {
+  border-color: rgba(255, 170, 0, 0.35);
+  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.7);
+}
+
+.strategy-card-topbar {
+  background: linear-gradient(135deg, #0e121e 0%, #171b28 100%);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 24px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.strategy-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.strategy-brand-icon {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 106, 19, 0.12);
+  border: 1px solid rgba(255, 106, 19, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.strategy-brand-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin-bottom: 2px;
+}
+
+.strategy-brand-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+
+.strategy-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.strategy-points-list {
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.strategy-point-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  transition: var(--transition);
+}
+
+.strategy-point-item:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 170, 0, 0.3);
+  transform: translateX(3px);
+}
+
+.strategy-point-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.strategy-point-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(255, 106, 19, 0.15);
+  color: var(--accent-orange);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.strategy-point-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.strategy-point-body p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.strategy-point-body strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.strategy-point-body em {
+  color: #fcd34d;
+  font-style: normal;
+  font-size: 13px;
+}
+
+.strategy-positioning-banner {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.25);
+}
+
+.positioning-icon {
+  font-size: 17px;
+}
+
+.strategy-footnote {
+  padding: 14px 28px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-dim);
+  font-size: 12px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 680px) {
+  .strategy-card-topbar {
+    padding: 18px 20px;
+  }
+  .strategy-points-list {
+    padding: 16px 16px;
+    gap: 10px;
+  }
+  .strategy-point-item {
+    padding: 14px 14px;
+  }
+  .strategy-point-title {
+    font-size: 0.95rem;
+  }
+  .strategy-point-body p {
+    font-size: 13px;
+  }
+  .strategy-positioning-banner {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+}
