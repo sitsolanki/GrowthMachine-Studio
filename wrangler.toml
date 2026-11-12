@@ -5,7 +5,7 @@ compatibility_date = "2024-10-15"
 [[d1_databases]]
 binding = "DB"
 database_name = "growthmachine-db"
-database_id = "492e7106-ff4b-452c-a9e7-06153d181cd9"
+database_id = "b6579903-cac2-4ea0-81eb-4425203db2fb"
 
 [assets]
 directory = "."
