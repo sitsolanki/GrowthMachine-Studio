@@ -31,6 +31,11 @@ export default {
       return handleAuth(request, env);
     }
 
+    // Public AI Chatbot endpoint
+    if (path === '/api/chat' && request.method === 'POST') {
+      return handleChat(request, env);
+    }
+
     if (path.startsWith('/api/admin/')) {
       const authorized = await checkAuth(request, env);
       if (!authorized) {
@@ -50,6 +55,16 @@ export default {
       if (listingUpdateMatch && request.method === 'DELETE') {
         return handleDeleteListing(env, listingUpdateMatch[1]);
       }
+
+      // Admin Leads management endpoints
+      if (path === '/api/admin/leads' && request.method === 'GET') {
+        return handleGetLeads(env);
+      }
+      const leadDeleteMatch = path.match(/^\/api\/admin\/leads\/(\d+)$/);
+      if (leadDeleteMatch && request.method === 'DELETE') {
+        return handleDeleteLead(env, leadDeleteMatch[1]);
+      }
+
       return json({ error: 'Not found' }, 404);
     }
 
@@ -338,3 +353,285 @@ function validateImageUrl(value) {
     return { ok: false, value: null };
   }
 }
+
+// ============================================================================
+// AI Chatbot & Lead Automation Engine
+// ============================================================================
+
+const SYSTEM_PROMPT = `You are "MachineBot", the friendly and expert AI Growth Consultant for GrowthMachine Studio (growthmachinestudio.com).
+Your mission is to provide helpful, rapid, and trustworthy guidance to business owners seeking high-converting websites and digital growth.
+
+STUDIO PACKAGES & PRICING:
+1. Starter Landing Page: ₹2,999 (one-time). Conversion-focused single page, mobile responsive, WhatsApp/call CTAs, enquiry capture. Delivered in 24-48 hrs.
+2. Complete Business Suite: ₹6,499 (one-time). Up to 5 custom sections/pages, tailored copywriting, portfolio, SEO structure, in-house admin portal. Best seller for clinics, advocates, consultants, real estate.
+3. Catalog / D2C Store: ₹11,999 (one-time). Up to 10 pages, product catalogue showcase, category filters, direct WhatsApp ordering.
+4. Custom Web Platform: ₹19,999+. Advanced custom web apps, specialized integrations.
+5. Enterprise Cloud Setup: ₹999 one-time (SSL, global CDN, zero separate server fee architecture).
+6. Ongoing Cloud Maintenance: Basic ₹499/mo | Business ₹999/mo | Enterprise ₹1,999/mo.
+
+STUDIO ADVANTAGES:
+- 24 to 72 hours rapid delivery.
+- Clients own 100% of domain, code, and files. No vendor lock-in.
+- Next-Gen global edge cloud hosting with 99.9% uptime and sub-second speed (<0.8s).
+- Direct WhatsApp communication and free live mockups.
+
+COMMUNICATION STYLE:
+- Warm, professional, concise, and conversion-focused.
+- Highlight package prices transparently when asked.
+- In every conversation, gently encourage the visitor to share their business name, what type of website they need, their phone number or WhatsApp, or their email so the studio director can provide a custom quote or free mockup.
+- If they provide contact info, thank them warmly and confirm our team will reach out within 24 hours.
+
+CONTACT:
+WhatsApp / Phone: +91 75575 75514
+Email: studio.growthmachine@gmail.com
+Studio Location: Delhi NCR, India (Serving clients worldwide).`;
+
+async function handleChat(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const { message, session_id } = body;
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return json({ error: 'Message is required' }, 400);
+  }
+
+  const cleanMessage = message.trim().slice(0, 2000);
+  const sessionId = typeof session_id === 'string' && session_id.trim()
+    ? session_id.trim().slice(0, 100)
+    : 'sess_' + Date.now();
+
+  try {
+    // 1. Ensure chat session exists
+    await env.DB.prepare(
+      `INSERT INTO chat_sessions (id, last_active) VALUES (?, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET last_active = CURRENT_TIMESTAMP`
+    ).bind(sessionId).run();
+
+    // 2. Save user message
+    await env.DB.prepare(
+      `INSERT INTO chat_messages (session_id, role, content) VALUES (?, 'user', ?)`
+    ).bind(sessionId, cleanMessage).run();
+
+    // 3. Fetch recent history for context
+    const historyRes = await env.DB.prepare(
+      `SELECT role, content FROM chat_messages WHERE session_id = ? ORDER BY id ASC LIMIT 16`
+    ).bind(sessionId).all();
+
+    const conversationHistory = (historyRes.results || []).map(row => ({
+      role: row.role,
+      content: row.content,
+    }));
+
+    // 4. Call OpenRouter API
+    let botReply = '';
+    const openRouterKey = env.OPENROUTER_API_KEY;
+
+    if (openRouterKey) {
+      try {
+        const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openRouterKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://www.growthmachinestudio.com',
+            'X-Title': 'GrowthMachine Studio AI Chat',
+          },
+          body: JSON.stringify({
+            model: 'meta-llama/llama-3.3-70b-instruct:free',
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              ...conversationHistory,
+            ],
+            max_tokens: 450,
+            temperature: 0.7,
+          }),
+        });
+
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          if (aiData.choices && aiData.choices[0] && aiData.choices[0].message) {
+            botReply = aiData.choices[0].message.content.trim();
+          }
+        } else {
+          console.error('OpenRouter error status:', aiResponse.status);
+          // Fallback to fast secondary free model
+          const fallbackResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openRouterKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'google/gemini-2.0-flash-exp:free',
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                ...conversationHistory,
+              ],
+              max_tokens: 400,
+            }),
+          });
+          if (fallbackResp.ok) {
+            const fallbackData = await fallbackResp.json();
+            if (fallbackData.choices && fallbackData.choices[0]) {
+              botReply = fallbackData.choices[0].message.content.trim();
+            }
+          }
+        }
+      } catch (aiErr) {
+        console.error('OpenRouter fetch failed:', aiErr);
+      }
+    }
+
+    // High quality intelligent fallback if OpenRouter key is not set or network fails
+    if (!botReply) {
+      botReply = generateIntelligentFallback(cleanMessage);
+    }
+
+    // 5. Save assistant reply
+    await env.DB.prepare(
+      `INSERT INTO chat_messages (session_id, role, content) VALUES (?, 'assistant', ?)`
+    ).bind(sessionId, botReply).run();
+
+    // 6. Lead extraction & automated alerts
+    const lead = extractLeadInfo(cleanMessage, conversationHistory);
+    if (lead.hasLead) {
+      try {
+        await env.DB.prepare(
+          `INSERT INTO leads (session_id, name, phone, email, service, budget, message)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          sessionId,
+          lead.name || null,
+          lead.phone || null,
+          lead.email || null,
+          lead.service || null,
+          lead.budget || null,
+          cleanMessage
+        ).run();
+
+        // Send instant Telegram alert (non-blocking)
+        await sendTelegramAlert(env, lead, cleanMessage);
+      } catch (leadDbErr) {
+        console.error('Failed to save or alert lead:', leadDbErr);
+      }
+    }
+
+    return json({
+      reply: botReply,
+      session_id: sessionId,
+      lead_detected: lead.hasLead,
+    });
+  } catch (err) {
+    console.error('handleChat error:', err);
+    return json({
+      reply: 'Thanks for reaching out! We are ready to help build your website. Would you like to connect directly on WhatsApp at +91 75575 75514 for instant support?',
+      session_id: sessionId,
+    }, 200);
+  }
+}
+
+function extractLeadInfo(userMessage, history) {
+  const combined = (history.map(h => h.content).join('\n') + '\n' + userMessage);
+
+  // Phone match (Indian & International formats)
+  const phoneMatch = combined.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b[6-9]\d{9}\b/);
+  
+  // Email match
+  const emailMatch = combined.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+
+  // Name match
+  const nameMatch = userMessage.match(/(?:my name is|i am|i'm|this is|call me)\s+([a-zA-Z\s]{2,25})/i);
+
+  // Service detection
+  let detectedService = null;
+  const msgLower = combined.toLowerCase();
+  if (msgLower.includes('landing') || msgLower.includes('2999') || msgLower.includes('starter')) {
+    detectedService = 'Starter Landing Page (₹2,999)';
+  } else if (msgLower.includes('catalog') || msgLower.includes('ecommerce') || msgLower.includes('store') || msgLower.includes('11999')) {
+    detectedService = 'Catalog / D2C Store (₹11,999)';
+  } else if (msgLower.includes('business') || msgLower.includes('6499') || msgLower.includes('suite') || msgLower.includes('website')) {
+    detectedService = 'Complete Business Suite (₹6,499)';
+  } else if (msgLower.includes('seo') || msgLower.includes('maintenance') || msgLower.includes('hosting')) {
+    detectedService = 'Cloud Care / SEO Growth';
+  }
+
+  // Budget detection
+  const budgetMatch = combined.match(/(?:₹|rs\.?|inr|budget\s*(?:is|of)?)\s*([\d,]+)/i);
+
+  const hasLead = Boolean(phoneMatch || emailMatch);
+
+  return {
+    hasLead,
+    phone: phoneMatch ? phoneMatch[0].trim() : null,
+    email: emailMatch ? emailMatch[0].trim() : null,
+    name: nameMatch ? nameMatch[1].trim() : null,
+    service: detectedService,
+    budget: budgetMatch ? budgetMatch[1] : null,
+  };
+}
+
+async function sendTelegramAlert(env, lead, originalMessage) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
+
+  const text = `🎯 *New Website Lead Captured!*\n\n` +
+    `👤 *Name:* ${lead.name || 'Not provided'}\n` +
+    `📞 *Phone:* ${lead.phone || 'Not provided'}\n` +
+    `✉️ *Email:* ${lead.email || 'Not provided'}\n` +
+    `🏷️ *Service:* ${lead.service || 'Website Project'}\n` +
+    `💰 *Budget:* ${lead.budget ? '₹' + lead.budget : 'Standard'}\n` +
+    `💬 *Recent Message:* _${originalMessage.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1')}_\n\n` +
+    `⚡ *Source:* GrowthMachine Studio AI Chatbot`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: env.TELEGRAM_CHAT_ID,
+        text: text,
+        parse_mode: 'Markdown',
+      }),
+    });
+  } catch (err) {
+    console.error('Telegram notification error:', err);
+  }
+}
+
+function generateIntelligentFallback(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes('price') || m.includes('cost') || m.includes('package') || m.includes('rate')) {
+    return "Our packages are 100% transparent with zero hidden fees:\n\n• Starter Landing Page: ₹2,999 (1-page rapid launch)\n• Complete Business Suite: ₹6,499 (up to 5 pages, custom design)\n• Product Catalog / D2C: ₹11,999 (full product showcase)\n\nWhat kind of business or website are you planning to build?";
+  }
+  if (m.includes('portfolio') || m.includes('work') || m.includes('sample') || m.includes('example')) {
+    return "We have built real client websites across healthcare, real estate, legal consulting, logistics, and D2C brands that load in under 0.8 seconds! Would you like a live demo tailored to your specific industry? What is your business name or sector?";
+  }
+  if (m.includes('time') || m.includes('duration') || m.includes('delivery') || m.includes('how long')) {
+    return "We deliver fast! Standard landing pages and business suites are built, reviewed, and ready for launch in 24 to 72 hours. When are you looking to go live?";
+  }
+  return "Hello! I'm the GrowthMachine Studio assistant. We build high-converting, mobile-friendly business websites and landing pages starting from ₹2,999 with 48-hour delivery. Would you like to share what kind of website you're looking for?";
+}
+
+async function handleGetLeads(env) {
+  try {
+    const { results } = await env.DB.prepare(
+      'SELECT * FROM leads ORDER BY created_at DESC LIMIT 100'
+    ).all();
+    return json(results || []);
+  } catch (err) {
+    return json({ error: err.message }, 500);
+  }
+}
+
+async function handleDeleteLead(env, id) {
+  try {
+    await env.DB.prepare('DELETE FROM leads WHERE id = ?').bind(id).run();
+    return json({ ok: true });
+  } catch (err) {
+    return json({ error: err.message }, 500);
+  }
+}
+

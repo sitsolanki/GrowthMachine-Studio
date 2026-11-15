@@ -127,6 +127,7 @@ async function loadAll() {
     await populateProfileForm();
     await populatePortfolioList();
     await populatePricingForm();
+    await populateLeadsList();
   } catch (err) {
     console.error('Error loading admin data:', err);
     showToast('Notice: ' + err.message);
@@ -720,3 +721,83 @@ function escapeJS(str) {
   if (!str) return '';
   return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
+
+// AI Chatbot Leads Population & Controls
+async function populateLeadsList() {
+  const container = document.getElementById('admin-leads-list');
+  const countBadge = document.getElementById('leads-count');
+  if (!container) return;
+
+  try {
+    const leads = await apiJson('/api/admin/leads');
+    if (countBadge) {
+      countBadge.textContent = `${leads.length} lead${leads.length === 1 ? '' : 's'}`;
+    }
+
+    if (!leads || leads.length === 0) {
+      container.innerHTML = `
+        <div style="padding: 24px; text-align: center; color: var(--text-dim); background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed var(--border);">
+          <div style="font-size: 28px; margin-bottom: 8px;">🤖</div>
+          <div style="font-weight: 600; color: #fff;">No AI leads captured yet</div>
+          <p style="font-size: 13px; margin: 4px 0 0;">When visitors chat with your AI assistant on your website, their contact details will appear here automatically.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = leads.map(l => {
+      const createdDate = l.created_at ? new Date(l.created_at).toLocaleString() : 'Recent';
+      const cleanPhone = l.phone ? l.phone.replace(/[^0-9]/g, '') : '';
+      const whatsappLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}` : null;
+
+      return `
+        <div class="portfolio-manage-item" style="margin-bottom: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 16px;">
+          <div class="portfolio-manage-info">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <h4 style="margin: 0; font-size: 16px; color: #fff;">${escapeHTML(l.name || 'Anonymous Visitor')}</h4>
+              <span style="font-size: 12px; color: var(--text-dim);">• ${createdDate}</span>
+              ${l.service ? `<span class="badge" style="font-size: 11px; padding: 2px 8px; background: rgba(255,106,19,0.15); color: #ffaa00; border-color: rgba(255,106,19,0.3);">${escapeHTML(l.service)}</span>` : ''}
+            </div>
+            
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; font-size: 13.5px;">
+              ${l.phone ? `<div style="color: #22c55e;">📞 <strong>${escapeHTML(l.phone)}</strong></div>` : ''}
+              ${l.email ? `<div style="color: #38bdf8;">✉️ ${escapeHTML(l.email)}</div>` : ''}
+              ${l.budget ? `<div style="color: #fbbf24;">💰 Budget: ₹${escapeHTML(l.budget)}</div>` : ''}
+            </div>
+
+            ${l.message ? `
+              <div style="font-size: 13px; color: #cbd5e1; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border-left: 3px solid #ff6a13;">
+                "${escapeHTML(l.message)}"
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="portfolio-manage-actions" style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+            ${whatsappLink ? `
+              <a href="${whatsappLink}" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="text-decoration: none; padding: 6px 12px; font-size: 12px;">
+                💬 Open WhatsApp
+              </a>
+            ` : ''}
+            <button type="button" class="btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="handleDeleteLead(${l.id})">
+              Delete Lead
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading leads:', err);
+    container.innerHTML = `<p style="color: #ef4444; font-size: 13px;">Error fetching leads: ${escapeHTML(err.message)}</p>`;
+  }
+}
+
+window.handleDeleteLead = async function(id) {
+  if (!confirm('Are you sure you want to remove this lead record?')) return;
+  try {
+    await apiRequest(`/api/admin/leads/${id}`, { method: 'DELETE' });
+    showToast('Lead deleted successfully');
+    await populateLeadsList();
+  } catch (err) {
+    alert('Failed to delete lead: ' + err.message);
+  }
+};

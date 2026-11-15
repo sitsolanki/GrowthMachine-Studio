@@ -110,6 +110,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="chat-widget.css">
 </head>
 <body>
 
@@ -603,18 +604,63 @@
     </div>
   </footer>
 
-  <!-- Floating Direct WhatsApp Button -->
-  <a id="floating-whatsapp-btn" href="#" target="_blank" rel="noopener noreferrer" class="floating-whatsapp" title="Chat on WhatsApp">
-    💬
-  </a>
+  <!-- 24/7 AI Growth Consultant Chat Widget -->
+  <div class="chat-widget-container">
+    <button id="chat-widget-toggle" class="chat-widget-toggle" aria-label="Open 24/7 AI Growth Consultant">
+      <span class="chat-toggle-icon">💬</span>
+      <span id="chat-unread-badge" class="chat-unread-badge"></span>
+    </button>
+
+    <div id="chat-panel" class="chat-panel">
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-avatar">⚡</div>
+          <div>
+            <div class="chat-header-name">GrowthMachine AI</div>
+            <div class="chat-header-status">
+              <span class="chat-status-dot"></span> 24/7 Active Consultant
+            </div>
+          </div>
+        </div>
+        <button id="chat-close-btn" class="chat-close-btn" aria-label="Close Chat">✕</button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="chat-messages" class="chat-messages">
+        <!-- Rendered via chat.js -->
+      </div>
+
+      <!-- Quick Action Chips -->
+      <div class="chat-quick-actions">
+        <span class="chat-chip" data-prompt="What are your package prices?">🏷️ Website Prices</span>
+        <span class="chat-chip" data-prompt="How fast can you build a 5-page business site?">⚡ Turnaround Time</span>
+        <span class="chat-chip" data-prompt="Can I get a free live mockup for my business?">🎁 Free Live Mockup</span>
+      </div>
+
+      <!-- Typing Bouncing Dots -->
+      <div id="chat-typing" class="chat-typing" style="display: none; margin: 0 18px 12px;">
+        <span class="chat-dot"></span>
+        <span class="chat-dot"></span>
+        <span class="chat-dot"></span>
+      </div>
+
+      <!-- Input Form -->
+      <form id="chat-form" class="chat-form">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Ask about websites, pricing, or ideas..." autocomplete="off" maxlength="1500" required>
+        <button type="submit" id="chat-send-btn" class="chat-send-btn" aria-label="Send Message">➤</button>
+      </form>
+    </div>
+  </div>
 
   <!-- Admin Panel Trigger for Owner -->
   <a href="admin.html" class="admin-badge-trigger" title="Access Studio Admin Control">
     <span>⚙️ Studio Admin</span>
   </a>
 
-  <!-- Load Data Store and Frontend Renderer -->
+  <!-- Load Data Store, Frontend Renderer & AI Chat Engine -->
   <script src="store.js"></script>
   <script src="app.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>
