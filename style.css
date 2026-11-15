@@ -872,7 +872,29 @@ p {
   gap: 16px;
 }
 
-/* Floating Action Trigger - removed old whatsapp float, replaced with AI Chat Widget */
+/* Floating Action Trigger */
+.floating-whatsapp {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99;
+  background: #25d366;
+  color: #000;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
+  transition: var(--transition);
+}
+
+.floating-whatsapp:hover {
+  transform: scale(1.1);
+}
 
 /* Admin Quick Bar */
 .admin-badge-trigger {
