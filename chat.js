@@ -174,7 +174,7 @@
         const data = await res.json();
         hideTyping();
 
-        const botReply = data.reply || "Thanks for your inquiry! Our team is available on WhatsApp at +91 75575 75514 for rapid custom quotes.";
+        const botReply = data.reply || "Thanks for your inquiry! Would you like to share your requirements or business details so our team can provide a free quote?";
         renderMessage('bot', botReply);
         saveMessageToCache('bot', botReply);
       } catch (err) {
@@ -182,7 +182,7 @@
         hideTyping();
         renderMessage(
           'bot',
-          "I'm momentarily disconnected, but our team is active! Feel free to chat with us directly on WhatsApp at +91 75575 75514 for instant pricing and mockups."
+          "I'm momentarily disconnected, but our team is active! Feel free to share your business details or email us at studio.growthmachine@gmail.com for instant pricing and mockups."
         );
       }
     });

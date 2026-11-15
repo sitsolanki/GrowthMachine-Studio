@@ -5,8 +5,7 @@ This folder contains `set-description.mjs`, a small Node.js script that sets the
 The script writes the description through the official Google Business Profile **Business Information API** (`Location.profile.description`). Business facts used throughout:
 
 - Business name: GrowthMachine Studio
-- Address: 5b/23, Vishnu Garden, West Delhi 110018, India
-- Phone: +91 75575 75514
+- Address: Vishnu Garden, West Delhi 110018, India
 - Website: https://www.growthmachinestudio.com/
 - Services: landing page design, business website development, e-commerce / product catalogue websites, website launch support
 - Audience: Delhi NCR professionals and local businesses (advocates, clinics, consultants, real estate, local services, D2C brands)

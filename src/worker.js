@@ -382,9 +382,8 @@ COMMUNICATION STYLE:
 - If they provide contact info, thank them warmly and confirm our team will reach out within 24 hours.
 
 CONTACT:
-WhatsApp / Phone: +91 75575 75514
 Email: studio.growthmachine@gmail.com
-Studio Location: Delhi NCR, India (Serving clients worldwide).`;
+Studio Location: Vishnu Garden, West Delhi 110018, India (Serving clients worldwide).`;
 
 async function handleChat(request, env) {
   let body;
@@ -528,7 +527,7 @@ async function handleChat(request, env) {
   } catch (err) {
     console.error('handleChat error:', err);
     return json({
-      reply: 'Thanks for reaching out! We are ready to help build your website. Would you like to connect directly on WhatsApp at +91 75575 75514 for instant support?',
+      reply: 'Thanks for reaching out! We are ready to help build your website. Would you like to share your project requirements or business details so our team can provide a free quote?',
       session_id: sessionId,
     }, 200);
   }
