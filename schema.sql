@@ -59,4 +59,5 @@ CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 CREATE INDEX IF NOT EXISTS idx_leads_created ON leads(created_at);
 
 INSERT OR IGNORE INTO business_info (id, agency_name, email, phone, whatsapp, tagline, subheadline, location, pricing_plans, admin_pin) VALUES
-(1, 'GrowthMachine Studio', 'studio.growthmachine@gmail.com', '+91 75575 75514', '917557575514', 'High-Converting Websites & Growth Landing Pages', 'We build ultra-fast, premium websites & lead-generation machines using modern frameworks, conversion copywriting, and clean handcrafted code. Ready in 24 to 72 hours.', '5b/23, Vishnu Garden, West Delhi 110018', '[]', '19882020');
+(1, 'GrowthMachine Studio', 'studio.growthmachine@gmail.com', '', '917557575514', 'High-Converting Websites & Growth Landing Pages', 'We build ultra-fast, premium websites & lead-generation machines using modern frameworks, conversion copywriting, and clean handcrafted code. Ready in 24 to 72 hours.', 'Vishnu Garden, West Delhi 110018', '[]', '19882020');
+

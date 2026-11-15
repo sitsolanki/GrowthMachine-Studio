@@ -26,11 +26,11 @@ async function renderPageContent() {
   const profile = {
     agency_name: defaults.siteProfile?.agencyName || 'GrowthMachine Studio',
     email: defaults.siteProfile?.email || 'studio.growthmachine@gmail.com',
-    phone: defaults.siteProfile?.phone || '+91 75575 75514',
+    phone: defaults.siteProfile?.phone || '',
     whatsapp: defaults.siteProfile?.whatsapp || '917557575514',
     tagline: defaults.siteProfile?.tagline || '',
     subheadline: defaults.siteProfile?.subheadline || '',
-    location: defaults.siteProfile?.location || '',
+    location: defaults.siteProfile?.location || 'Vishnu Garden, West Delhi 110018',
     ...remoteProfile,
   };
   const remoteListings = listingsResult.status === 'fulfilled' && Array.isArray(listingsResult.value)
@@ -73,10 +73,13 @@ async function renderPageContent() {
   if (footerLoc && profile.location) footerLoc.textContent = `📍 ${profile.location}`;
 
   // Bind WhatsApp buttons
-  ['hero-whatsapp-btn', 'cta-whatsapp-btn', 'footer-whatsapp-link', 'floating-whatsapp-btn'].forEach((id) => {
+  ['hero-whatsapp-btn', 'cta-whatsapp-btn', 'footer-whatsapp-link'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.href = whatsappUrl;
   });
+
+  const floatingWhatsApp = document.getElementById('floating-whatsapp-btn');
+  if (floatingWhatsApp) floatingWhatsApp.remove();
 
   // Phone and Email links
   const emailLink = document.getElementById('footer-email-link');
@@ -88,9 +91,15 @@ async function renderPageContent() {
 
   const phoneLink = document.getElementById('footer-phone-link');
   const phoneText = document.getElementById('footer-phone-text');
-  if (phoneLink && phoneText) {
-    phoneLink.href = `tel:${(profile.phone || '+91 75575 75514').replace(/\s+/g, '')}`;
-    phoneText.textContent = profile.phone || '+91 75575 75514';
+  if (phoneLink) {
+    if (profile.phone && profile.phone.trim()) {
+      phoneLink.href = `tel:${profile.phone.replace(/\s+/g, '')}`;
+      if (phoneText) phoneText.textContent = profile.phone;
+    } else {
+      const parentLi = phoneLink.closest('li');
+      if (parentLi) parentLi.remove();
+      else phoneLink.remove();
+    }
   }
 
   // Render Stats (static)

@@ -8,9 +8,9 @@ const DEFAULT_DATA = {
     tagline: "High-Converting Websites & Growth Landing Pages",
     subheadline: "We build ultra-fast, premium websites & lead-generation machines using modern frameworks, conversion copywriting, and clean handcrafted code. Ready in 24 to 72 hours.",
     email: "studio.growthmachine@gmail.com",
-    phone: "+91 75575 75514",
+    phone: "",
     whatsapp: "917557575514",
-    location: "5b/23, Vishnu Garden, West Delhi 110018"
+    location: "Vishnu Garden, West Delhi 110018"
   },
   stats: [
     { value: "24-48h", label: "Superfast Turnaround" },
