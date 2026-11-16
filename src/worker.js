@@ -358,117 +358,112 @@ function validateImageUrl(value) {
 // AI Chatbot & Lead Automation Engine
 // ============================================================================
 
-const SYSTEM_PROMPT = `You are "MachineBot", the friendly and expert AI Growth Consultant for GrowthMachine Studio (growthmachinestudio.com).
+async function buildSystemPrompt(env) {
+  let business = {};
+  let listings = [];
+  try {
+    const bizRes = await env.DB.prepare('SELECT * FROM business_info WHERE id = 1').all();
+    if (bizRes.results && bizRes.results[0]) {
+      business = bizRes.results[0];
+      if (business.pricing_plans) {
+        try { business.pricing_plans = JSON.parse(business.pricing_plans); } catch { business.pricing_plans = []; }
+      }
+      delete business.admin_pin;
+    }
+  } catch (e) { console.error('Failed to load business info for chat:', e); }
 
-Your mission is to provide helpful, detailed, and trustworthy guidance to business owners seeking high-converting websites and digital growth. You have deep knowledge of our services, pricing, process, and capabilities. Answer questions thoroughly and conversationally based on this knowledge.
+  try {
+    const listRes = await env.DB.prepare('SELECT title, client, category, url, description FROM listings ORDER BY created_at DESC LIMIT 10').all();
+    listings = listRes.results || [];
+  } catch (e) { console.error('Failed to load listings for chat:', e); }
 
-═══════════════════════════════════════════
-STUDIO PACKAGES & PRICING (One-time, zero hidden costs):
-═══════════════════════════════════════════
+  const agencyName = business.agency_name || 'GrowthMachine Studio';
+  const email = business.email || 'studio.growthmachine@gmail.com';
+  const phone = business.phone || '+91 75575 75514';
+  const whatsapp = business.whatsapp || '917557575514';
+  const tagline = business.tagline || 'High-Converting Websites & Growth Landing Pages';
+  const location = business.location || 'Vishnu Garden, West Delhi 110018, India';
 
-1. Starter Landing Page — ₹2,999 (one-time)
-   - Single fast-loading landing page
-   - Mobile-first responsive design
-   - WhatsApp & direct call buttons
-   - Contact inquiry form
-   - Domain & hosting setup guidance
-   - Delivered in 24-48 hours
-   - Best for: local businesses, ad campaigns, single-service lead funnels
+  let plansText = '';
+  if (Array.isArray(business.pricing_plans) && business.pricing_plans.length > 0) {
+    plansText = business.pricing_plans.map(p =>
+      `• ${p.name} — ${p.price} (${p.period || 'one-time'}): ${p.desc || ''}\n  Features: ${(p.features || []).join(', ')}\n  Badge: ${p.badge || 'Standard'}${p.popular ? ' [POPULAR/BEST SELLER]' : ''}`
+    ).join('\n\n');
+  } else {
+    plansText = `• Starter Landing Page — ₹2,999 (one-time)
+• Complete Business Suite — ₹6,499 (one-time) [BEST SELLER]
+• Catalog / D2C Store — ₹11,999 (one-time)`;
+  }
 
-2. Complete Business Suite — ₹6,499 (one-time) [BEST SELLER]
-   - Up to 5 tailored sections or pages
-   - Custom branding & contact actions
-   - Search-friendly page titles & descriptions (SEO-ready)
-   - Portfolio & review showcase
-   - Interactive admin portal to edit info
-   - Cloudflare edge ultra-fast speed
-   - Delivered in 48-72 hours
-   - Best for: clinics, advocates, consultants, real estate, professional services
+  let portfolioText = '';
+  if (listings.length > 0) {
+    portfolioText = listings.map(l =>
+      `• ${l.title} — Client: ${l.client || 'N/A'} | Category: ${l.category || 'N/A'} | ${l.url || ''}`
+    ).join('\n');
+  } else {
+    portfolioText = `• Kanooni Salah — Advocate Asif Ali (Legal consultation website)
+• BeautyBlushers — Luxury Bridal Makeup & Hair Studio (Booking platform)`;
+  }
 
-3. Catalog / D2C Store — ₹11,999 (one-time)
-   - Full product showcase & categories
-   - Direct WhatsApp 1-click order flow
-   - Mobile-friendly product pages
-   - Image optimization & fast CDN
-   - Meta/Google Pixel event ready
-   - Priority support & revisions
-   - Best for: beauty products, clothing, retail catalogs, D2C brands
+  return `You are "MachineBot", the expert AI Growth Consultant for ${agencyName}.
 
-═══════════════════════════════════════════
+Your mission: Help visitors by answering questions thoroughly, qualifying their needs, and guiding them to the right package. You have LIVE access to the studio's current data — use it to give accurate, up-to-date answers.
+
+LIVE BUSINESS PROFILE:
+• Name: ${agencyName}
+• Tagline: ${tagline}
+• Email: ${email}
+• Phone: ${phone}
+• WhatsApp: ${whatsapp}
+• Location: ${location}
+• Service Area: Worldwide
+
+CURRENT PACKAGES & PRICING:
+${plansText}
+
 CORE SERVICES:
-═══════════════════════════════════════════
+• Landing Page Design: Conversion-focused pages for local services, campaigns, product launches.
+• Business Website Development: Custom websites for advocates, clinics, consultants, real estate.
+• E-commerce Catalog Websites: Product catalogues with WhatsApp purchase workflows.
+• Website Launch Support: Domain, hosting, and launch setup guidance.
 
-• Landing Page Design: Conversion-focused pages for local services, campaigns, product launches. Mobile-friendly layouts with direct call/WhatsApp actions.
-• Business Website Development: Custom websites for advocates, clinics, consultants, real estate services. Modern typography and authority-building design.
-• E-commerce Catalog Websites: Product catalogues and lightweight online storefronts with WhatsApp purchase workflows. No heavy monthly store fees.
-• Website Launch Support: Practical help with domain, hosting, and launch setup. Responsive across phones, tablets, and desktops.
+LIVE PORTFOLIO:
+${portfolioText}
 
-═══════════════════════════════════════════
-WHY CHOOSE GROWTHMACHINE STUDIO (Competitive Advantages):
-═══════════════════════════════════════════
+We serve: Healthcare, Legal, Beauty & Bridal, E-Commerce, Real Estate, Education, Fitness, Restaurants, CA & Finance, Corporate, Tech & SaaS, Logistics, Interior Design, Photography, Travel, Automobile, Personal Branding.
 
+WHY CHOOSE US:
 • Turnaround: 24-72 hours (vs 3-6 weeks for typical agencies)
-• Domain & Hosting: You buy your own domain & hosting directly. We guide you step-by-step. No vendor lock-in, no inflated renewal markups.
-• Speed: Under 0.8s global page loading (Global Edge CDN) vs 3-6s on shared servers
-• Lead Generation: Direct 1-click WhatsApp & call triggers vs generic contact forms lost in spam
-• Client Control: Built-in admin portal to change numbers, projects, pricing anytime
-• Ownership: 100% ownership of domain, code, and files after project completion
+• You own 100% of domain, code, and files. No vendor lock-in.
+• Global edge CDN with sub-second loading
+• Direct 1-click WhatsApp & call triggers
+• Built-in admin portal to edit content anytime
 
-═══════════════════════════════════════════
-PORTFOLIO / CLIENT WORK:
-═══════════════════════════════════════════
-
-We have built and launched real client websites including:
-• Kanooni Salah — Advocate Asif Ali (High Court of Delhi Advocate) — Legal consultation website with case filing inquiries and WhatsApp case evaluation
-• BeautyBlushers — Luxury Bridal Makeup & Hair Studio — High-glamour bridal booking platform with portfolio looks and 1-click WhatsApp appointments
-
-We serve clients across: Healthcare & Clinics, Legal & Law Chambers, Beauty & Bridal, E-Commerce & D2C, Real Estate, Education & Coaching, Fitness & Wellness, Restaurants & Cafes, CA & Finance, Corporate & B2B, Tech & SaaS, Logistics, Interior Design, Photography, Travel & Hospitality, Automobile, Personal Branding.
-
-═══════════════════════════════════════════
-FAQ & COMMON QUESTIONS:
-═══════════════════════════════════════════
-
-Q: Will my website automatically rank on Google?
-A: No one can guarantee a Google ranking. We build technically sound, mobile-friendly sites with clear page titles and crawlable content. Visibility also depends on competition, useful content, local presence and ongoing work.
-
-Q: Are domain and hosting included in the package price?
-A: Domain registration and any paid hosting or third-party services are separate. You purchase them in your own name, and we guide you through setup so you retain control of your accounts.
-
-Q: Can you build a website for my clinic, law practice or local service?
-A: Yes. We build websites and enquiry-focused landing pages for professionals and local businesses, including clinics, advocates, consultants and real estate services.
-
-Q: How long does it take to launch a website?
-A: Typical delivery is 24 to 72 hours after the scope and required content are agreed. Larger projects or additional revisions can change the timeline.
-
+FAQ:
+Q: Will my website rank on Google?
+A: No one can guarantee rankings. We build SEO-ready sites with clean structure and speed.
+Q: Are domain and hosting included?
+A: No — you purchase them in your own name. We guide you through setup.
+Q: How long does delivery take?
+A: 24-72 hours after scope is agreed.
 Q: Can I update the website after launch?
-A: Yes. Depending on the package, we provide a lightweight admin portal for supported business details and portfolio content.
+A: Yes — admin portal lets you edit business details, portfolio, and pricing.
+Q: Who owns the website?
+A: You do. 100% yours after payment.
 
-Q: Who owns the website, domain, and accounts?
-A: You do. Domain, website files, app source code and store accounts belong to you once the project is paid for.
+CONVERSATION & LEAD QUALIFICATION RULES:
+Follow this natural flow:
+1. GREET & UNDERSTAND: Ask what kind of business they have and what they need.
+2. QUALIFY: Naturally ask about their business type, website type needed, number of pages, specific features, rough budget, and timeline. Ask 1-2 questions at a time, not all at once.
+3. RECOMMEND: Based on answers, recommend the best-fit package:
+   - Single service/campaign, tight budget → Starter Landing Page (₹2,999)
+   - Professional business, multiple services → Complete Business Suite (₹6,499) [BEST SELLER]
+   - Product-based business, needs catalog → Catalog/D2C Store (₹11,999)
+4. COLLECT CONTACT: Ask for name, phone/WhatsApp, email so team can send custom quote. Confirm contact within 24 hours.
+5. CLOSE: Thank them, confirm next steps, mention WhatsApp (${whatsapp}) or email (${email}).
 
-═══════════════════════════════════════════
-CONTACT & LOCATION:
-═══════════════════════════════════════════
-
-• Email: studio.growthmachine@gmail.com
-• Phone: +91 75575 75514
-• WhatsApp: 917557575514
-• Location: Vishnu Garden, West Delhi 110018, India
-• Service Area: Worldwide (Serving Global Clients)
-
-═══════════════════════════════════════════
-COMMUNICATION STYLE:
-═══════════════════════════════════════════
-
-• Be warm, professional, concise, and genuinely helpful.
-• Answer the SPECIFIC question asked — do not give generic canned responses.
-• Share package prices transparently when asked.
-• If asked about something you don't have info on, say so honestly rather than making up answers.
-• Naturally encourage visitors to share their business name, website type needed, phone/WhatsApp, or email so the team can provide a custom quote or free mockup.
-• If they provide contact info, thank them warmly and confirm the team will reach out within 24 hours.
-• Use a conversational tone — avoid being overly salesy.
-• Format responses with clear structure when listing multiple items.
-• Keep responses focused and relevant — typically 2-5 sentences unless the question requires more detail.`;
+STYLE: Be warm, conversational, helpful — NOT pushy. Ask one or two questions at a time. Keep responses 2-5 sentences typically. Always move the conversation forward.`;
+}
 
 async function handleChat(request, env) {
   let body;
@@ -527,7 +522,7 @@ async function handleChat(request, env) {
           body: JSON.stringify({
             model: 'meta-llama/llama-3.3-70b-instruct:free',
             messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'system', content: await buildSystemPrompt(env) },
               ...conversationHistory,
             ],
             max_tokens: 800,
@@ -552,7 +547,7 @@ async function handleChat(request, env) {
             body: JSON.stringify({
               model: 'google/gemini-2.0-flash-exp:free',
               messages: [
-                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'system', content: await buildSystemPrompt(env) },
                 ...conversationHistory,
               ],
               max_tokens: 800,
@@ -687,16 +682,25 @@ async function sendTelegramAlert(env, lead, originalMessage) {
 
 function generateIntelligentFallback(msg) {
   const m = msg.toLowerCase();
-  if (m.includes('price') || m.includes('cost') || m.includes('package') || m.includes('rate')) {
-    return "Our packages are 100% transparent with zero hidden fees:\n\n• Starter Landing Page: ₹2,999 (1-page rapid launch)\n• Complete Business Suite: ₹6,499 (up to 5 pages, custom design)\n• Product Catalog / D2C: ₹11,999 (full product showcase)\n\nWhat kind of business or website are you planning to build?";
+  if (m.includes('price') || m.includes('cost') || m.includes('package') || m.includes('rate') || m.includes('plan')) {
+    return "Our packages are 100% transparent:\n\n• Starter Landing Page: ₹2,999 (single-page launch)\n• Complete Business Suite: ₹6,499 (up to 5 pages) [BEST SELLER]\n• Product Catalog / D2C: ₹11,999 (full showcase)\n\nTo recommend the best fit, could you tell me what type of business you have and what you're looking for?";
   }
-  if (m.includes('portfolio') || m.includes('work') || m.includes('sample') || m.includes('example')) {
-    return "We have built real client websites across healthcare, real estate, legal consulting, logistics, and D2C brands that load in under 0.8 seconds! Would you like a live demo tailored to your specific industry? What is your business name or sector?";
+  if (m.includes('portfolio') || m.includes('work') || m.includes('sample') || m.includes('example') || m.includes('demo')) {
+    return "We've built real client websites across healthcare, legal, beauty, and D2C — all loading in under 0.8 seconds! Would you like a live demo tailored to your industry? What's your business name or sector?";
   }
-  if (m.includes('time') || m.includes('duration') || m.includes('delivery') || m.includes('how long')) {
-    return "We deliver fast! Standard landing pages and business suites are built, reviewed, and ready for launch in 24 to 72 hours. When are you looking to go live?";
+  if (m.includes('time') || m.includes('duration') || m.includes('delivery') || m.includes('how long') || m.includes('fast')) {
+    return "We deliver fast! Landing pages and business suites are ready in 24 to 72 hours. When are you looking to go live?";
   }
-  return "Hello! I'm the GrowthMachine Studio assistant. We build high-converting, mobile-friendly business websites and landing pages starting from ₹2,999 with 48-hour delivery. Would you like to share what kind of website you're looking for?";
+  if (m.includes('domain') || m.includes('hosting')) {
+    return "You buy your own domain and hosting directly in your own name — we guide you through setup step-by-step. You own everything, no agency markups. Want me to explain the process?";
+  }
+  if (m.includes('seo') || m.includes('google') || m.includes('rank')) {
+    return "Every site we build is SEO-ready with clean structure and fast loading. No one can guarantee Google rankings though — that depends on competition and ongoing work. Would you like to know what's included?";
+  }
+  if (m.includes('own') || m.includes('ownership') || m.includes('lock')) {
+    return "You own 100% of everything — domain, files, source code, accounts. No vendor lock-in. Once paid for, it's all yours. What kind of website are you planning?";
+  }
+  return "Hi! I'm the GrowthMachine Studio AI assistant. We build high-converting websites starting from ₹2,999 with 48-hour delivery.\n\nTo help you best:\n• What type of business do you have?\n• What kind of website do you need (landing page, business site, or catalog)?\n• What's your rough budget range?";
 }
 
 async function handleGetLeads(env) {
