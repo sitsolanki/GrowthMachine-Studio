@@ -36,6 +36,10 @@ export default {
       return handleChat(request, env);
     }
 
+    if (path === '/api/chat/lead' && request.method === 'POST') {
+      return handleLeadForm(request, env);
+    }
+
     if (path.startsWith('/api/admin/')) {
       const authorized = await checkAuth(request, env);
       if (!authorized) {
@@ -453,17 +457,19 @@ A: You do. 100% yours after payment.
 
 CONVERSATION & LEAD QUALIFICATION RULES:
 Follow this natural flow:
-1. GREET & UNDERSTAND: Ask what kind of business they have and what they need.
-2. QUALIFY: Naturally ask about their business type, website type needed, number of pages, specific features, rough budget, and timeline. Ask 1-2 questions at a time, not all at once.
-3. RECOMMEND: Based on answers, recommend the best-fit package:
-   - Single service/campaign, tight budget → Starter Landing Page (₹2,999)
-   - Professional business, multiple services → Complete Business Suite (₹6,499) [BEST SELLER]
-   - Product-based business, needs catalog → Catalog/D2C Store (₹11,999)
-4. COLLECT CONTACT: Ask for name, phone/WhatsApp, email so team can send custom quote. Confirm contact within 24 hours.
-5. CLOSE: Thank them, confirm next steps, mention WhatsApp (${whatsapp}) or email (${email}).
+1. GREET & UNDERSTAND: Ask what kind of business they have and what they need. Ask 1-2 questions at a time.
+2. QUALIFY: Naturally ask about their business type, website type needed, and rough budget.
+3. COLLECT LEAD VIA FORM: You have a built-in quote form on the website! When the visitor is interested in a quote, mockup, pricing for their project, or has shared some details (like their business type or what website they need), end your reply with the special marker [SHOW_FORM] on its own line. The marker automatically opens a form on their screen where they fill: name, business, business type, website type, budget, requirements, phone, email. Example:
+"Great! I can help with that. Please fill this quick form so our team can prepare a custom quote and free mockup for you:
+[SHOW_FORM]"
+4. CLOSE: After the marker, do NOT ask more questions � the form collects everything. Just add one short sentence like "Our team will reach out within 24 hours!"
 
-STYLE: Be warm, conversational, helpful — NOT pushy. Ask one or two questions at a time. Keep responses 2-5 sentences typically. Always move the conversation forward.`;
-}
+RULES FOR [SHOW_FORM]:
+- Include the exact text [SHOW_FORM] (uppercase, square brackets) when the visitor wants a quote, mockup, pricing for their project, or seems ready to move forward.
+- Only include it once per conversation unless the visitor didn't fill the form.
+- Never write more than one short sentence after the marker.
+
+STYLE: Be warm, conversational, helpful � NOT pushy. Ask one or two questions at a time. Keep responses 2-5 sentences typically.`;}
 
 async function handleChat(request, env) {
   let body;
@@ -678,6 +684,74 @@ async function sendTelegramAlert(env, lead, originalMessage) {
   } catch (err) {
     console.error('Telegram notification error:', err);
   }
+}
+
+async function handleLeadForm(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ ok: false, error: 'Invalid JSON body' }, 400);
+  }
+
+  const name = (body.name || '').toString().trim().slice(0, 80);
+  const business = (body.business || '').toString().trim().slice(0, 100);
+  const businessType = (body.business_type || '').toString().trim().slice(0, 60);
+  const websiteType = (body.website_type || '').toString().trim().slice(0, 60);
+  const budget = (body.budget || '').toString().trim().slice(0, 40);
+  const requirements = (body.requirements || '').toString().trim().slice(0, 600);
+  const phone = (body.phone || '').toString().trim().slice(0, 30);
+  const email = (body.email || '').toString().trim().slice(0, 120);
+  const sessionId = (body.session_id || 'form_' + Date.now()).toString().trim().slice(0, 100);
+
+  if (!name || !phone) {
+    return json({ ok: false, error: 'Name and phone number are required.' }, 400);
+  }
+
+  try {
+    await env.DB.prepare(
+      `INSERT INTO leads (session_id, name, phone, email, service, budget, message)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      sessionId,
+      name,
+      phone,
+      email || null,
+      [businessType, websiteType, business ? '(' + business + ')' : ''].filter(Boolean).join(' | '),
+      budget || null,
+      requirements || null
+    ).run();
+  } catch (dbErr) {
+    console.error('Failed to save lead from form:', dbErr);
+    return json({ ok: false, error: 'Could not save your request. Please WhatsApp us directly.' }, 500);
+  }
+
+  // Telegram alert with full form details
+  if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
+    const safe = (s) => String(s || 'Not provided').replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
+    const text =
+      '📋 *New Quote Request (Form)*\n\n' +
+      '👤 *Name:* ' + safe(name) + '\n' +
+      '🏢 *Business:* ' + safe(business) + '\n' +
+      '🏷️ *Business Type:* ' + safe(businessType) + '\n' +
+      '🌐 *Website Needed:* ' + safe(websiteType) + '\n' +
+      '💰 *Budget:* ' + safe(budget) + '\n' +
+      '📝 *Requirements:* ' + safe(requirements) + '\n' +
+      '📞 *Phone:* ' + safe(phone) + '\n' +
+      '✉️ *Email:* ' + safe(email);
+
+    try {
+      await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' }),
+      });
+    } catch (tgErr) {
+      console.error('Telegram form alert error:', tgErr);
+    }
+  }
+
+  return json({ ok: true });
 }
 
 function generateIntelligentFallback(msg) {

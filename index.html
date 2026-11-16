@@ -648,6 +648,56 @@
         <input type="text" id="chat-input" class="chat-input" placeholder="Ask about websites, pricing, or ideas..." autocomplete="off" maxlength="1500" required>
         <button type="submit" id="chat-send-btn" class="chat-send-btn" aria-label="Send Message">âž¤</button>
       </form>
+      <!-- Quick Quote Request Form (shown when triggered) -->
+      <div id="chat-lead-form-wrap" class="chat-lead-wrap" style="display:none;">
+        <div class="chat-lead-head">
+          <span class="chat-lead-title">?? Get Your Free Quote</span>
+          <button type="button" id="chat-lead-close" class="chat-lead-close" aria-label="Close form">?</button>
+        </div>
+        <p class="chat-lead-sub">Fill this quick form — our team will send you a custom quote & free mockup within 24 hours.</p>
+        <form id="chat-lead-form" class="chat-lead-form">
+          <input type="text" id="lead-name" placeholder="Your Name *" required maxlength="60">
+          <input type="text" id="lead-business" placeholder="Business Name *" required maxlength="80">
+          <select id="lead-business-type" required>
+            <option value="" disabled selected>Business Type *</option>
+            <option>Healthcare / Clinic / Doctor</option>
+            <option>Legal / Advocate / CA</option>
+            <option>Beauty / Bridal / Salon</option>
+            <option>Real Estate / Builder</option>
+            <option>Restaurant / Cafe / Cloud Kitchen</option>
+            <option>Retail / E-Commerce / D2C</option>
+            <option>Education / Coaching / Academy</option>
+            <option>Fitness / Gym / Wellness</option>
+            <option>Travel / Tours / Hotel</option>
+            <option>Photography / Events</option>
+            <option>Tech / SaaS / App</option>
+            <option>Professional Services / Consulting</option>
+            <option>Other</option>
+          </select>
+          <select id="lead-website-type" required>
+            <option value="" disabled selected>What Do You Need? *</option>
+            <option>Landing Page (?2,999)</option>
+            <option>Business Website (?6,499)</option>
+            <option>Product Catalog / D2C Store (?11,999)</option>
+            <option>Custom / Enterprise Solution (?19,999+)</option>
+            <option>Not Sure — Help Me Decide</option>
+          </select>
+          <select id="lead-budget" required>
+            <option value="" disabled selected>Your Budget Range *</option>
+            <option>Under ?3,000</option>
+            <option>?3,000 – ?7,000</option>
+            <option>?7,000 – ?12,000</option>
+            <option>?12,000 – ?20,000</option>
+            <option>?20,000+</option>
+            <option>Let's Discuss</option>
+          </select>
+          <textarea id="lead-requirements" placeholder="Any extra requirements? (pages needed, features, reference sites, timeline...)" maxlength="500" rows="2"></textarea>
+          <input type="tel" id="lead-phone" placeholder="WhatsApp / Phone Number *" required maxlength="20">
+          <input type="email" id="lead-email" placeholder="Email Address (optional)" maxlength="80">
+          <button type="submit" id="lead-submit-btn" class="chat-lead-submit">? Request My Free Quote</button>
+          <div id="lead-form-note" class="chat-lead-note">?? Your details stay private. No spam, ever.</div>
+        </form>
+      </div>
     </div>
   </div>
 

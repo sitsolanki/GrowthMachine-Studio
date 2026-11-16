@@ -365,3 +365,95 @@
     border: none;
   }
 }
+
+/* ===== Lead Form Inside Chat Widget ===== */
+.chat-lead-wrap {
+  border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--bg-secondary, #12141a);
+  padding: 14px 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.chat-lead-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.chat-lead-title {
+  font-family: var(--font-display, sans-serif);
+  font-weight: 700;
+  font-size: 14px;
+  color: #ffaa00;
+}
+.chat-lead-close {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  color: var(--text-muted, #94a3b8);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+}
+.chat-lead-close:hover { color: #fff; background: rgba(255,255,255,0.14); }
+.chat-lead-sub {
+  font-size: 11.5px;
+  color: var(--text-muted, #94a3b8);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.chat-lead-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-lead-form input,
+.chat-lead-form select,
+.chat-lead-form textarea {
+  background: var(--bg-card, #181b24);
+  border: 1px solid var(--border-strong, rgba(255,255,255,0.16));
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #fff;
+  font-family: var(--font-body, sans-serif);
+  font-size: 12.5px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.25s ease;
+}
+.chat-lead-form input:focus,
+.chat-lead-form select:focus,
+.chat-lead-form textarea:focus {
+  border-color: #ff6a13;
+  box-shadow: 0 0 0 2px rgba(255,106,19,0.15);
+}
+.chat-lead-form textarea { resize: vertical; min-height: 54px; }
+.chat-lead-submit {
+  background: linear-gradient(135deg, #ff6a13 0%, #ffaa00 100%);
+  color: #000;
+  font-weight: 700;
+  border: none;
+  border-radius: 9999px;
+  padding: 11px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.chat-lead-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 18px rgba(255,106,19,0.35);
+}
+.chat-lead-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.chat-lead-note {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-dim, #64748b);
+  margin-top: 2px;
+}

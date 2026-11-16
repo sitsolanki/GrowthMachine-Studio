@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GrowthMachine Studio AI Assistant Frontend Client
  * Interacts with /api/chat powered by Cloudflare Worker + OpenRouter
  */
@@ -70,6 +70,12 @@
     const sendBtn = document.getElementById('chat-send-btn');
     const chips = document.querySelectorAll('.chat-chip');
     const unreadBadge = document.getElementById('chat-unread-badge');
+    const leadWrap = document.getElementById('chat-lead-form-wrap');
+    const leadCloseBtn = document.getElementById('chat-lead-close');
+    const leadForm = document.getElementById('chat-lead-form');
+    const leadSubmitBtn = document.getElementById('lead-submit-btn');
+    const leadNote = document.getElementById('lead-form-note');
+    const chatFormEl = document.getElementById('chat-form');
 
     if (!toggleBtn || !panel || !form || !input || !messagesContainer) return;
 
@@ -91,12 +97,39 @@
     toggleBtn.addEventListener('click', toggleChat);
     if (closeBtn) closeBtn.addEventListener('click', toggleChat);
 
+    // ===== Lead Form Controls =====
+    function showLeadForm() {
+      if (!leadWrap) return;
+      leadWrap.style.display = 'block';
+      scrollToBottom();
+    }
+    function hideLeadForm() {
+      if (!leadWrap) return;
+      leadWrap.style.display = 'none';
+    }
+    if (leadCloseBtn) leadCloseBtn.addEventListener('click', hideLeadForm);
+
+    // Show form when user clicks the quick chip "Can I get a free live mockup for my business?"
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const t = (chip.getAttribute('data-prompt') || '').toLowerCase();
+        if (t.includes('mockup') || t.includes('quote') || t.includes('price')) {
+          showLeadForm();
+        }
+      });
+    });
+
     // Render message into DOM
     function renderMessage(role, text, time) {
       const msgDiv = document.createElement('div');
       msgDiv.className = `chat-msg ${role}`;
       
-      const formattedText = role === 'bot' ? formatBotMessage(text) : escapeHTML(text);
+      let formattedText = role === 'bot' ? formatBotMessage(text) : escapeHTML(text);
+      // Bot can trigger the quote form with [SHOW_FORM] marker
+      if (role === 'bot' && formattedText.includes('[SHOW_FORM]')) {
+        formattedText = formattedText.replace(/\[SHOW_FORM\]/g, '');
+        showLeadForm();
+      }
       const displayTime = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       msgDiv.innerHTML = `
@@ -186,5 +219,52 @@
         );
       }
     });
+
+    // ===== Lead Form Submission =====
+    if (leadForm) {
+      leadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('lead-name').value.trim();
+        const business = document.getElementById('lead-business').value.trim();
+        const businessType = document.getElementById('lead-business-type').value;
+        const websiteType = document.getElementById('lead-website-type').value;
+        const budget = document.getElementById('lead-budget').value;
+        const requirements = document.getElementById('lead-requirements').value.trim();
+        const phone = document.getElementById('lead-phone').value.trim();
+        const email = document.getElementById('lead-email').value.trim();
+
+        leadSubmitBtn.disabled = true;
+        leadSubmitBtn.textContent = '⏳ Sending...';
+
+        try {
+          const res = await fetch('/api/chat/lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id: getSessionId(),
+              name, business, business_type: businessType,
+              website_type: websiteType, budget,
+              requirements, phone, email,
+            }),
+          });
+          const data = await res.json();
+
+          if (res.ok && data.ok) {
+            hideLeadForm();
+            leadForm.reset();
+            renderMessage('bot', `✅ Thank you${name ? ', ' + name.split(' ')[0] : ''}! Your request has been received. Our team will contact you within 24 hours with your custom quote & free mockup. 🚀`);
+            saveMessageToCache('bot', 'Lead form submitted — quote requested.');
+          } else {
+            leadNote.textContent = '⚠️ ' + (data.error || 'Something went wrong. Please try again or WhatsApp us directly.');
+          }
+        } catch (err) {
+          console.error('Lead submit error:', err);
+          leadNote.textContent = '⚠️ Connection error. Please try again or WhatsApp us directly.';
+        } finally {
+          leadSubmitBtn.disabled = false;
+          leadSubmitBtn.textContent = '⚡ Request My Free Quote';
+        }
+      });
+    }
   });
 })();
