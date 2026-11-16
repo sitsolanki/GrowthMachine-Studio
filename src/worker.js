@@ -77,7 +77,7 @@ export default {
     }
 
     if (path === '/launch' || path.startsWith('/launch/')) {
-      return new Response('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>404 - Page Not Found</title><style>body{background:#0a0b0e;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}.box{max-width:480px;padding:40px}h1{font-size:4rem;margin:0 0 10px;color:#ffaa00}p{color:#94a3b8;font-size:1.1rem;margin-bottom:24px}a{color:#ff6a13;text-decoration:none;font-weight:600}a:hover{text-decoration:underline}</style></head><body><div class="box"><h1>404</h1><p>This page has been removed.</p><a href="/">← Return to GrowthMachine Studio</a></div></body></html>', {
+      return new Response('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>404 - Page Not Found</title><style>body{background:#0a0b0e;color:#fff;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}.box{max-width:480px;padding:40px}h1{font-size:4rem;margin:0 0 10px;color:#ffaa00}p{color:#94a3b8;font-size:1.1rem;margin-bottom:24px}a{color:#ff6a13;text-decoration:none;font-weight:600}a:hover{text-decoration:underline}</style></head><body><div class="box"><h1>404</h1><p>This page has been removed.</p><a href="/">â† Return to GrowthMachine Studio</a></div></body></html>', {
         status: 404,
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
@@ -391,45 +391,45 @@ async function buildSystemPrompt(env) {
   let plansText = '';
   if (Array.isArray(business.pricing_plans) && business.pricing_plans.length > 0) {
     plansText = business.pricing_plans.map(p =>
-      `• ${p.name} — ${p.price} (${p.period || 'one-time'}): ${p.desc || ''}\n  Features: ${(p.features || []).join(', ')}\n  Badge: ${p.badge || 'Standard'}${p.popular ? ' [POPULAR/BEST SELLER]' : ''}`
+      `â€¢ ${p.name} â€” ${p.price} (${p.period || 'one-time'}): ${p.desc || ''}\n  Features: ${(p.features || []).join(', ')}\n  Badge: ${p.badge || 'Standard'}${p.popular ? ' [POPULAR/BEST SELLER]' : ''}`
     ).join('\n\n');
   } else {
-    plansText = `• Starter Landing Page — ₹2,999 (one-time)
-• Complete Business Suite — ₹6,499 (one-time) [BEST SELLER]
-• Catalog / D2C Store — ₹11,999 (one-time)`;
+    plansText = `â€¢ Starter Landing Page â€” â‚¹2,999 (one-time)
+â€¢ Complete Business Suite â€” â‚¹6,499 (one-time) [BEST SELLER]
+â€¢ Catalog / D2C Store â€” â‚¹11,999 (one-time)`;
   }
 
   let portfolioText = '';
   if (listings.length > 0) {
     portfolioText = listings.map(l =>
-      `• ${l.title} — Client: ${l.client || 'N/A'} | Category: ${l.category || 'N/A'} | ${l.url || ''}`
+      `â€¢ ${l.title} â€” Client: ${l.client || 'N/A'} | Category: ${l.category || 'N/A'} | ${l.url || ''}`
     ).join('\n');
   } else {
-    portfolioText = `• Kanooni Salah — Advocate Asif Ali (Legal consultation website)
-• BeautyBlushers — Luxury Bridal Makeup & Hair Studio (Booking platform)`;
+    portfolioText = `â€¢ Kanooni Salah â€” Advocate Asif Ali (Legal consultation website)
+â€¢ BeautyBlushers â€” Luxury Bridal Makeup & Hair Studio (Booking platform)`;
   }
 
   return `You are "MachineBot", the expert AI Growth Consultant for ${agencyName}.
 
-Your mission: Help visitors by answering questions thoroughly, qualifying their needs, and guiding them to the right package. You have LIVE access to the studio's current data — use it to give accurate, up-to-date answers.
+Your mission: Help visitors by answering questions thoroughly, qualifying their needs, and guiding them to the right package. You have LIVE access to the studio's current data â€” use it to give accurate, up-to-date answers.
 
 LIVE BUSINESS PROFILE:
-• Name: ${agencyName}
-• Tagline: ${tagline}
-• Email: ${email}
-• Phone: ${phone}
-• WhatsApp: ${whatsapp}
-• Location: ${location}
-• Service Area: Worldwide
+â€¢ Name: ${agencyName}
+â€¢ Tagline: ${tagline}
+â€¢ Email: ${email}
+â€¢ Phone: ${phone}
+â€¢ WhatsApp: ${whatsapp}
+â€¢ Location: ${location}
+â€¢ Service Area: Worldwide
 
 CURRENT PACKAGES & PRICING:
 ${plansText}
 
 CORE SERVICES:
-• Landing Page Design: Conversion-focused pages for local services, campaigns, product launches.
-• Business Website Development: Custom websites for advocates, clinics, consultants, real estate.
-• E-commerce Catalog Websites: Product catalogues with WhatsApp purchase workflows.
-• Website Launch Support: Domain, hosting, and launch setup guidance.
+â€¢ Landing Page Design: Conversion-focused pages for local services, campaigns, product launches.
+â€¢ Business Website Development: Custom websites for advocates, clinics, consultants, real estate.
+â€¢ E-commerce Catalog Websites: Product catalogues with WhatsApp purchase workflows.
+â€¢ Website Launch Support: Domain, hosting, and launch setup guidance.
 
 LIVE PORTFOLIO:
 ${portfolioText}
@@ -437,21 +437,21 @@ ${portfolioText}
 We serve: Healthcare, Legal, Beauty & Bridal, E-Commerce, Real Estate, Education, Fitness, Restaurants, CA & Finance, Corporate, Tech & SaaS, Logistics, Interior Design, Photography, Travel, Automobile, Personal Branding.
 
 WHY CHOOSE US:
-• Turnaround: 24-72 hours (vs 3-6 weeks for typical agencies)
-• You own 100% of domain, code, and files. No vendor lock-in.
-• Global edge CDN with sub-second loading
-• Direct 1-click WhatsApp & call triggers
-• Built-in admin portal to edit content anytime
+â€¢ Turnaround: 24-72 hours (vs 3-6 weeks for typical agencies)
+â€¢ You own 100% of domain, code, and files. No vendor lock-in.
+â€¢ Global edge CDN with sub-second loading
+â€¢ Direct 1-click WhatsApp & call triggers
+â€¢ Built-in admin portal to edit content anytime
 
 FAQ:
 Q: Will my website rank on Google?
 A: No one can guarantee rankings. We build SEO-ready sites with clean structure and speed.
 Q: Are domain and hosting included?
-A: No — you purchase them in your own name. We guide you through setup.
+A: No â€” you purchase them in your own name. We guide you through setup.
 Q: How long does delivery take?
 A: 24-72 hours after scope is agreed.
 Q: Can I update the website after launch?
-A: Yes — admin portal lets you edit business details, portfolio, and pricing.
+A: Yes â€” admin portal lets you edit business details, portfolio, and pricing.
 Q: Who owns the website?
 A: You do. 100% yours after payment.
 
@@ -462,14 +462,14 @@ Follow this natural flow:
 3. COLLECT LEAD VIA FORM: You have a built-in quote form on the website! When the visitor is interested in a quote, mockup, pricing for their project, or has shared some details (like their business type or what website they need), end your reply with the special marker [SHOW_FORM] on its own line. The marker automatically opens a form on their screen where they fill: name, business, business type, website type, budget, requirements, phone, email. Example:
 "Great! I can help with that. Please fill this quick form so our team can prepare a custom quote and free mockup for you:
 [SHOW_FORM]"
-4. CLOSE: After the marker, do NOT ask more questions � the form collects everything. Just add one short sentence like "Our team will reach out within 24 hours!"
+4. CLOSE: After the marker, do NOT ask more questions ï¿½ the form collects everything. Just add one short sentence like "Our team will reach out within 24 hours!"
 
 RULES FOR [SHOW_FORM]:
 - Include the exact text [SHOW_FORM] (uppercase, square brackets) when the visitor wants a quote, mockup, pricing for their project, or seems ready to move forward.
 - Only include it once per conversation unless the visitor didn't fill the form.
 - Never write more than one short sentence after the marker.
 
-STYLE: Be warm, conversational, helpful � NOT pushy. Ask one or two questions at a time. Keep responses 2-5 sentences typically.`;}
+STYLE: Be warm, conversational, helpful ï¿½ NOT pushy. Ask one or two questions at a time. Keep responses 2-5 sentences typically.`;}
 
 async function handleChat(request, env) {
   let body;
@@ -516,58 +516,46 @@ async function handleChat(request, env) {
     const openRouterKey = env.OPENROUTER_API_KEY;
 
     if (openRouterKey) {
-      try {
-        const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openRouterKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://www.growthmachinestudio.com',
-            'X-Title': 'GrowthMachine Studio AI Chat',
-          },
-          body: JSON.stringify({
-            model: 'meta-llama/llama-3.3-70b-instruct:free',
-            messages: [
-              { role: 'system', content: await buildSystemPrompt(env) },
-              ...conversationHistory,
-            ],
-            max_tokens: 800,
-            temperature: 0.7,
-          }),
-        });
+      const models = [
+        'google/gemma-4-31b-it:free',
+        'nvidia/nemotron-3.5-lightning:free',
+        'nvidia/nemotron-3.5-super-vl:free',
+      ];
+      const chatMessages = [
+        { role: 'system', content: await buildSystemPrompt(env) },
+        ...conversationHistory,
+      ];
 
-        if (aiResponse.ok) {
-          const aiData = await aiResponse.json();
-          if (aiData.choices && aiData.choices[0] && aiData.choices[0].message) {
-            botReply = aiData.choices[0].message.content.trim();
-          }
-        } else {
-          console.error('OpenRouter error status:', aiResponse.status);
-          // Fallback to fast secondary free model
-          const fallbackResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      for (const model of models) {
+        try {
+          const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${openRouterKey}`,
               'Content-Type': 'application/json',
+              'HTTP-Referer': 'https://www.growthmachinestudio.com',
+              'X-Title': 'GrowthMachine Studio AI Chat',
             },
             body: JSON.stringify({
-              model: 'google/gemini-2.0-flash-exp:free',
-              messages: [
-                { role: 'system', content: await buildSystemPrompt(env) },
-                ...conversationHistory,
-              ],
-              max_tokens: 800,
+              model: model,
+              messages: chatMessages,
+              max_tokens: 1024,
+              temperature: 0.7,
             }),
           });
-          if (fallbackResp.ok) {
-            const fallbackData = await fallbackResp.json();
-            if (fallbackData.choices && fallbackData.choices[0]) {
-              botReply = fallbackData.choices[0].message.content.trim();
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            if (aiData.choices && aiData.choices[0] && aiData.choices[0].message && aiData.choices[0].message.content) {
+              botReply = aiData.choices[0].message.content.trim();
+              if (botReply.length > 10) break;
             }
+          } else {
+            console.error('OpenRouter error status for ' + model + ':', aiResponse.status);
           }
+        } catch (aiErr) {
+          console.error('OpenRouter fetch failed for ' + model + ':', aiErr);
         }
-      } catch (aiErr) {
-        console.error('OpenRouter fetch failed:', aiErr);
       }
     }
 
@@ -635,17 +623,17 @@ function extractLeadInfo(userMessage, history) {
   let detectedService = null;
   const msgLower = combined.toLowerCase();
   if (msgLower.includes('landing') || msgLower.includes('2999') || msgLower.includes('starter')) {
-    detectedService = 'Starter Landing Page (₹2,999)';
+    detectedService = 'Starter Landing Page (â‚¹2,999)';
   } else if (msgLower.includes('catalog') || msgLower.includes('ecommerce') || msgLower.includes('store') || msgLower.includes('11999')) {
-    detectedService = 'Catalog / D2C Store (₹11,999)';
+    detectedService = 'Catalog / D2C Store (â‚¹11,999)';
   } else if (msgLower.includes('business') || msgLower.includes('6499') || msgLower.includes('suite') || msgLower.includes('website')) {
-    detectedService = 'Complete Business Suite (₹6,499)';
+    detectedService = 'Complete Business Suite (â‚¹6,499)';
   } else if (msgLower.includes('seo') || msgLower.includes('maintenance') || msgLower.includes('hosting')) {
     detectedService = 'Cloud Care / SEO Growth';
   }
 
   // Budget detection
-  const budgetMatch = combined.match(/(?:₹|rs\.?|inr|budget\s*(?:is|of)?)\s*([\d,]+)/i);
+  const budgetMatch = combined.match(/(?:â‚¹|rs\.?|inr|budget\s*(?:is|of)?)\s*([\d,]+)/i);
 
   const hasLead = Boolean(phoneMatch || emailMatch);
 
@@ -662,14 +650,14 @@ function extractLeadInfo(userMessage, history) {
 async function sendTelegramAlert(env, lead, originalMessage) {
   if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) return;
 
-  const text = `🎯 *New Website Lead Captured!*\n\n` +
-    `👤 *Name:* ${lead.name || 'Not provided'}\n` +
-    `📞 *Phone:* ${lead.phone || 'Not provided'}\n` +
-    `✉️ *Email:* ${lead.email || 'Not provided'}\n` +
-    `🏷️ *Service:* ${lead.service || 'Website Project'}\n` +
-    `💰 *Budget:* ${lead.budget ? '₹' + lead.budget : 'Standard'}\n` +
-    `💬 *Recent Message:* _${originalMessage.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1')}_\n\n` +
-    `⚡ *Source:* GrowthMachine Studio AI Chatbot`;
+  const text = `ðŸŽ¯ *New Website Lead Captured!*\n\n` +
+    `ðŸ‘¤ *Name:* ${lead.name || 'Not provided'}\n` +
+    `ðŸ“ž *Phone:* ${lead.phone || 'Not provided'}\n` +
+    `âœ‰ï¸ *Email:* ${lead.email || 'Not provided'}\n` +
+    `ðŸ·ï¸ *Service:* ${lead.service || 'Website Project'}\n` +
+    `ðŸ’° *Budget:* ${lead.budget ? 'â‚¹' + lead.budget : 'Standard'}\n` +
+    `ðŸ’¬ *Recent Message:* _${originalMessage.replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1')}_\n\n` +
+    `âš¡ *Source:* GrowthMachine Studio AI Chatbot`;
 
   try {
     await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -710,6 +698,10 @@ async function handleLeadForm(request, env) {
 
   try {
     await env.DB.prepare(
+      `INSERT OR IGNORE INTO chat_sessions (id) VALUES (?)`
+    ).bind(sessionId).run();
+
+    await env.DB.prepare(
       `INSERT INTO leads (session_id, name, phone, email, service, budget, message)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).bind(
@@ -730,15 +722,15 @@ async function handleLeadForm(request, env) {
   if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
     const safe = (s) => String(s || 'Not provided').replace(/([_*[\]()~`>#+-=|{}.!])/g, '\\$1');
     const text =
-      '📋 *New Quote Request (Form)*\n\n' +
-      '👤 *Name:* ' + safe(name) + '\n' +
-      '🏢 *Business:* ' + safe(business) + '\n' +
-      '🏷️ *Business Type:* ' + safe(businessType) + '\n' +
-      '🌐 *Website Needed:* ' + safe(websiteType) + '\n' +
-      '💰 *Budget:* ' + safe(budget) + '\n' +
-      '📝 *Requirements:* ' + safe(requirements) + '\n' +
-      '📞 *Phone:* ' + safe(phone) + '\n' +
-      '✉️ *Email:* ' + safe(email);
+      'ðŸ“‹ *New Quote Request (Form)*\n\n' +
+      'ðŸ‘¤ *Name:* ' + safe(name) + '\n' +
+      'ðŸ¢ *Business:* ' + safe(business) + '\n' +
+      'ðŸ·ï¸ *Business Type:* ' + safe(businessType) + '\n' +
+      'ðŸŒ *Website Needed:* ' + safe(websiteType) + '\n' +
+      'ðŸ’° *Budget:* ' + safe(budget) + '\n' +
+      'ðŸ“ *Requirements:* ' + safe(requirements) + '\n' +
+      'ðŸ“ž *Phone:* ' + safe(phone) + '\n' +
+      'âœ‰ï¸ *Email:* ' + safe(email);
 
     try {
       await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -757,24 +749,24 @@ async function handleLeadForm(request, env) {
 function generateIntelligentFallback(msg) {
   const m = msg.toLowerCase();
   if (m.includes('price') || m.includes('cost') || m.includes('package') || m.includes('rate') || m.includes('plan')) {
-    return "Our packages are 100% transparent:\n\n• Starter Landing Page: ₹2,999 (single-page launch)\n• Complete Business Suite: ₹6,499 (up to 5 pages) [BEST SELLER]\n• Product Catalog / D2C: ₹11,999 (full showcase)\n\nTo recommend the best fit, could you tell me what type of business you have and what you're looking for?";
+    return "Our packages are 100% transparent:\n\nâ€¢ Starter Landing Page: â‚¹2,999 (single-page launch)\nâ€¢ Complete Business Suite: â‚¹6,499 (up to 5 pages) [BEST SELLER]\nâ€¢ Product Catalog / D2C: â‚¹11,999 (full showcase)\n\nTo recommend the best fit, could you tell me what type of business you have and what you're looking for?";
   }
   if (m.includes('portfolio') || m.includes('work') || m.includes('sample') || m.includes('example') || m.includes('demo')) {
-    return "We've built real client websites across healthcare, legal, beauty, and D2C — all loading in under 0.8 seconds! Would you like a live demo tailored to your industry? What's your business name or sector?";
+    return "We've built real client websites across healthcare, legal, beauty, and D2C â€” all loading in under 0.8 seconds! Would you like a live demo tailored to your industry? What's your business name or sector?";
   }
   if (m.includes('time') || m.includes('duration') || m.includes('delivery') || m.includes('how long') || m.includes('fast')) {
     return "We deliver fast! Landing pages and business suites are ready in 24 to 72 hours. When are you looking to go live?";
   }
   if (m.includes('domain') || m.includes('hosting')) {
-    return "You buy your own domain and hosting directly in your own name — we guide you through setup step-by-step. You own everything, no agency markups. Want me to explain the process?";
+    return "You buy your own domain and hosting directly in your own name â€” we guide you through setup step-by-step. You own everything, no agency markups. Want me to explain the process?";
   }
   if (m.includes('seo') || m.includes('google') || m.includes('rank')) {
-    return "Every site we build is SEO-ready with clean structure and fast loading. No one can guarantee Google rankings though — that depends on competition and ongoing work. Would you like to know what's included?";
+    return "Every site we build is SEO-ready with clean structure and fast loading. No one can guarantee Google rankings though â€” that depends on competition and ongoing work. Would you like to know what's included?";
   }
   if (m.includes('own') || m.includes('ownership') || m.includes('lock')) {
-    return "You own 100% of everything — domain, files, source code, accounts. No vendor lock-in. Once paid for, it's all yours. What kind of website are you planning?";
+    return "You own 100% of everything â€” domain, files, source code, accounts. No vendor lock-in. Once paid for, it's all yours. What kind of website are you planning?";
   }
-  return "Hi! I'm the GrowthMachine Studio AI assistant. We build high-converting websites starting from ₹2,999 with 48-hour delivery.\n\nTo help you best:\n• What type of business do you have?\n• What kind of website do you need (landing page, business site, or catalog)?\n• What's your rough budget range?";
+  return "Hi! I'm the GrowthMachine Studio AI assistant. We build high-converting websites starting from â‚¹2,999 with 48-hour delivery.\n\nTo help you best:\nâ€¢ What type of business do you have?\nâ€¢ What kind of website do you need (landing page, business site, or catalog)?\nâ€¢ What's your rough budget range?";
 }
 
 async function handleGetLeads(env) {
